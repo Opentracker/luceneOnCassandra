@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ Licensed to the Apache Software Foundation (ASF) under one or more
+ contributor license agreements.  See the NOTICE file distributed with
+ this work for additional information regarding copyright ownership.
+ The ASF licenses this file to You under the Apache License, Version 2.0
+ (the "License"); you may not use this file except in compliance with
+ the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  
+  <groupId>org.apache.lucene.store</groupId>
+  <artifactId>cassandra</artifactId>
+  <version>0.1-SNAPSHOT</version>
+  <name>Lucene on Cassandra</name>
+  <description></description>
+
+  <packaging>jar</packaging>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.basedir>/home/jason/work/svn/luceneOnCassandra</project.basedir>
+    <project.cassandra>/home/jason/work/svn/luceneOnCassandra/lib/apache-cassandra-1.0.8.jar</project.cassandra>
+    <project.libthrift>/home/jason/work/svn/luceneOnCassandra/lib/libthrift-0.6.jar</project.libthrift>
+    <project.commons.lang>/home/jason/work/svn/luceneOnCassandra/lib/commons-lang-2.4.jar</project.commons.lang>
+    <project.com.google.guava>/home/jason/work/svn/luceneOnCassandra/lib/guava-r08.jar</project.com.google.guava>
+    <project.hadoop.core>/home/jason/work/svn/luceneOnCassandra/lib/hadoop-core-0.20.203.1-brisk1-beta2.jar</project.hadoop.core>
+    <project.brisk>/home/jason/work/svn/luceneOnCassandra/lib/brisk-1.0~beta2.jar</project.brisk>
+    <project.hadoop.common>/home/jason/work/svn/luceneOnCassandra/lib/hadoop-common-2.2.0.jar</project.hadoop.common>
+    <project.hector.opentracker>/home/jason/work/svn/luceneOnCassandra/lib/hector-core-1.0-3-opentracker.jar</project.hector.opentracker>
+  </properties>
+
+  <build>
+    <sourceDirectory>../src/main/java</sourceDirectory>
+    <testSourceDirectory>../src/test/java</testSourceDirectory>
+    <defaultGoal>package</defaultGoal>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.1</version>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+          <!-- TODO we shouldn't exclude it. we did it here because the symbol
+               cannot find find in the classpath when the hadoop-common is alreayd included in
+               the classpath. this is not issue for now because we are not using
+               hadoop.. yet.-->
+          <excludes>
+            <exclude>**/org/apache/lucene/cassandra/HadoopFile.java</exclude>
+            <exclude>**/org/apache/lucene/cassandra/HadoopRandomAccessFile.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+        
+      <!-- create test jar so other modules can reuse the math test utility classes. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.4</version>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemProperties>
+            <property>
+              <name>testFilePath</name>
+              <value>../test</value>
+            </property>
+          </systemProperties>
+        </configuration>
+      </plugin>
+    
+    </plugins>
+  </build>
+
+  <dependencies>
+    <!-- tomcat 6.0.29 use in our enviornment has servlet spec 2.5 -->
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>2.5</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.xerial.snappy</groupId>
+      <artifactId>snappy-java</artifactId>
+      <version>1.0.4.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.16</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.6.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-core</artifactId>
+      <version>4.6.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-queryparser</artifactId>
+      <version>4.6.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-analyzers-common</artifactId>
+      <version>4.6.0</version>
+    </dependency>
+  
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20131018</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.thrift</groupId>
+      <artifactId>libthrift</artifactId>
+      <version>0.6</version>
+      <scope>system</scope>
+      <systemPath>${project.libthrift}</systemPath>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.cassandra</groupId>
+      <artifactId>cassandra</artifactId>
+      <version>1.0.8</version>
+      <scope>system</scope>
+      <systemPath>${project.cassandra}</systemPath>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.6.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jcl</artifactId>
+      <version>1.6.0</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.7</version>
+      <!-- <scope>test</scope> -->
+    </dependency>
+
+    <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+      <version>2.4</version>
+      <scope>system</scope>
+      <systemPath>${project.commons.lang}</systemPath>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <!-- <version>r05</version> -->
+      <version>r08</version>
+      <scope>system</scope>
+      <systemPath>${project.com.google.guava}</systemPath>
+    </dependency>
+
+    <dependency>
+      <groupId>hadoop.core</groupId>
+      <artifactId>hadoop.core</artifactId>
+      <version>0.20.203.1-brisk1-beta2</version>
+      <scope>system</scope>
+      <systemPath>${project.hadoop.core}</systemPath>
+    </dependency>
+
+    <dependency>
+      <groupId>brisk</groupId>
+      <artifactId>brisk</artifactId>
+      <version>1.0~beta2</version>
+      <scope>system</scope>
+      <systemPath>${project.brisk}</systemPath>
+    </dependency>
+
+    <dependency>
+      <groupId>hadoop.common</groupId>
+      <artifactId>hadoop.common</artifactId>
+      <version>2.2.0</version>
+      <scope>system</scope>
+      <systemPath>${project.hadoop.common}</systemPath>
+    </dependency>
+
+    <dependency>
+      <groupId>hector.opentracker</groupId>
+      <artifactId>hector.opentracker</artifactId>
+      <version>1.0.3</version>
+      <scope>system</scope>
+      <systemPath>${project.hector.opentracker}</systemPath>
+    </dependency>
+
+  </dependencies>
+
+  <scm>
+    <connection>scm:svn:https://svn.apache.org/repos/asf/lucene/mahout/trunk/math</connection>
+    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/lucene/mahout/trunk/math</developerConnection>
+    <url>https://svn.apache.org/repos/asf/lucene/mahout/mahout-math</url>
+  </scm>
+  <repositories>
+    <repository>
+      <id>Apache snapshots</id>
+      <url>https://repository.apache.org/content/groups/public/</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
+  </repositories>
+</project>
