@@ -208,7 +208,7 @@ public abstract class FSDirectory extends BaseDirectory {
 
   // returns the canonical version of the directory, creating it if it doesn't exist.
   private static File getCanonicalPath(File file) throws IOException {
-    return new File(file.getCanonicalPath());
+    return file.get(file.getCanonicalPath());
   }
 
   /** Create a new FSDirectory for the named location (ctor for subclasses).
@@ -222,7 +222,7 @@ public abstract class FSDirectory extends BaseDirectory {
     if (lockFactory == null) {
       lockFactory = new SimpleFSLockFactory();
     }
-    logger.info("getting canonical");
+    logger.trace("getting canonical path {}", path.getCanonicalPath());
     directory = getCanonicalPath(path);
 
     if (directory.exists() && !directory.isDirectory())
@@ -332,14 +332,14 @@ public abstract class FSDirectory extends BaseDirectory {
   public boolean fileExists(String name) {
     ensureOpen();
     logger.info("fileExists {}", name);
-    File file = new File(directory, name);
+    File file = directory.get(directory, name);// new File(directory, name);
     return file.exists();
   }
 
   /** Returns the time the named file was last modified. */
   public static long fileModified(File directory, String name) {
       logger.info("fileModified {}", name);
-    File file = new File(directory, name);
+    File file = directory.get(directory, name);// new File(directory, name);
     return file.lastModified();
   }
 
@@ -348,7 +348,7 @@ public abstract class FSDirectory extends BaseDirectory {
   public long fileLength(String name) throws IOException {
     ensureOpen();
     logger.info("fileLength {}, {}", directory, name);
-    File file = new File(directory, name);
+    File file = directory.get(directory, name);// new File(directory, name);
     final long len = file.length();
     if (len == 0 && !file.exists()) {
       throw new FileNotFoundException(name);
@@ -362,7 +362,7 @@ public abstract class FSDirectory extends BaseDirectory {
   public void deleteFile(String name) throws IOException {
     ensureOpen();
     logger.info("deleteFile {}", name);
-    File file = new File(directory, name);
+    File file = directory.get(directory, name);// new File(directory, name);
     if (!file.delete())
       throw new IOException("Cannot delete " + file);
     staleFiles.remove(name);
@@ -383,7 +383,7 @@ public abstract class FSDirectory extends BaseDirectory {
       if (!directory.mkdirs())
         throw new IOException("Cannot create directory: " + directory);
 
-    File file = new File(directory, name);
+    File file = directory.get(directory, name);// new File(directory, name);
     if (file.exists() && !file.delete())          // delete existing, if any
       throw new IOException("Cannot overwrite: " + name);
   }
@@ -478,8 +478,11 @@ public abstract class FSDirectory extends BaseDirectory {
     /** Create a new FSIndexInput, reading the entire file from <code>path</code> */
     protected FSIndexInput(String resourceDesc, File path, IOContext context) throws IOException {
       super(resourceDesc, context);
-      this.file = new RandomAccessFile(path, "r"); 
+//    this.file = new RandomAccessFile(path, "r"); 
+//      logger.error("path: " + path.getCanonicalPath());
+      this.file = path.getRandomAccessFile(path, "r");
       this.off = 0L;
+//      logger.error("Constructor RandomAccessFile: " + path.getCanonicalPath());
       this.end = file.length();
     }
     
@@ -540,7 +543,8 @@ public abstract class FSDirectory extends BaseDirectory {
       logger.info("initializing FSIndexOutput name {}", name);
       this.parent = parent;
       this.name = name;
-      file = new RandomAccessFile(new File(parent.directory, name), "rw");
+//      file = new RandomAccessFile(new File(parent.directory, name), "rw");
+      file = parent.directory.getRandomAccessFile(parent.directory.get(parent.directory, name), "rw");
       isOpen = true;
     }
 
@@ -598,7 +602,7 @@ public abstract class FSDirectory extends BaseDirectory {
 
   protected void fsync(String name) throws IOException {
       logger.info("fsync {}", name);
-    File fullFile = new File(directory, name);
+    File fullFile = directory.get(directory, name);// new File(directory, name);
     boolean success = false;
     int retryCount = 0;
     IOException exc = null;
@@ -607,7 +611,8 @@ public abstract class FSDirectory extends BaseDirectory {
       RandomAccessFile file = null;
       try {
         try {
-          file = new RandomAccessFile(fullFile, "rw");
+          file = fullFile.getRandomAccessFile(fullFile, "rw");
+//          file = new RandomAccessFile(fullFile, "rw");
           file.getFDsync();
           success = true;
         } finally {
