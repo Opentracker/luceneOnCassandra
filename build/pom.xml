@@ -39,6 +39,7 @@
     <project.brisk>/home/jason/work/svn/luceneOnCassandra/lib/brisk-1.0~beta2.jar</project.brisk>
     <project.hadoop.common>/home/jason/work/svn/luceneOnCassandra/lib/hadoop-common-2.2.0.jar</project.hadoop.common>
     <project.hector.opentracker>/home/jason/work/svn/luceneOnCassandra/lib/hector-core-1.0-3-opentracker.jar</project.hector.opentracker>
+    <project.zoie.core>/home/jason/work/svn/luceneOnCassandra/lib/zoie-core-3.2.0.jar</project.zoie.core>
   </properties>
 
   <build>
@@ -97,7 +98,62 @@
           </systemProperties>
         </configuration>
       </plugin>
-    
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
+        <version>1.0-alpha-2</version>
+        <executions>
+          <execution>
+            <phase>initialize</phase>
+            <goals>
+              <goal>read-project-properties</goal>
+            </goals>
+            <configuration>
+              <files>
+                <file>environment.properties</file>
+              </files>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      
+    <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.7</version>
+        <executions>        
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <scp file="target/${artifactId}-${version}.jar"
+                        todir="${conf/username}@${conf/hostname}:${conf/remote}"
+                        keyfile="${conf/keyfile}"
+                        trust="yes"
+                        verbose="true"
+                        port="${conf/port}"
+                        passphrase="${conf/keyfile/passphrase}" />
+              </target>
+            </configuration>            
+          </execution>
+        </executions>
+               <dependencies>
+                  <dependency>
+                     <groupId>com.jcraft</groupId>
+                     <artifactId>jsch</artifactId>
+                     <version>0.1.51</version>
+                  </dependency>
+                  <dependency>
+                     <groupId>org.apache.ant</groupId>
+                     <artifactId>ant-jsch</artifactId>
+                     <version>1.7.1</version>
+                  </dependency>
+               </dependencies>
+      </plugin>
+			
     </plugins>
   </build>
 
@@ -234,6 +290,14 @@
       <version>1.0.3</version>
       <scope>system</scope>
       <systemPath>${project.hector.opentracker}</systemPath>
+    </dependency>
+
+    <dependency>
+      <groupId>zoie.core</groupId>
+      <artifactId>zoie.core</artifactId>
+      <version>3.2.0</version>
+      <scope>system</scope>
+      <systemPath>${project.zoie.core}</systemPath>
     </dependency>
 
   </dependencies>
