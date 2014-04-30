@@ -27,13 +27,15 @@ public class Search {
 
     String field = "contents";
 
-    String queries = "398";
+    String queries = "California";
 
     int hitsPerPage = 40;
 
     boolean raw = false;
 
-    public static boolean useCassandraStorage = true;
+    public static boolean useCassandraStorage = false;
+
+    public static boolean useACassandra = true;
     
     String cassandraDirectory = null;
     
@@ -146,10 +148,16 @@ public class Search {
                                 IOContext.READ, null, keyspace, columnFamily,
                                 blockSize, blockSize);
             } else {
+                if (useACassandra)
                 dir =
                         org.apache.lucene.cassandra.FSDirectory
-                                .open(new org.apache.lucene.cassandra.File(
+                                .open(new org.apache.lucene.cassandra.ACassandraFile(
                                         indexPath));
+                else 
+                    dir =
+                    org.apache.lucene.cassandra.FSDirectory
+                            .open(new org.apache.lucene.cassandra.FSFile(
+                                    indexPath));
             }
 
             reader = DirectoryReader.open(dir);
