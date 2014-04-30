@@ -39,7 +39,7 @@ import proj.zoie.api.impl.ZoieMergePolicy;
 //http://search-lucene.blogspot.nl/2008/08/indexing-speed-factors.html,mergeFactor, X*mergeFactor= maxMergeDocs, 
 public class IndexFiles {
 
-    public static boolean useCassandraStorage = false;
+    public static boolean useCassandraStorage = true;
 
     public static boolean isCommitTimeBased = true;
 
