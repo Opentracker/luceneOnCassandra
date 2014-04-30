@@ -36,7 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** @lucene.internal */
-public class HadoopRandomAccessFile implements Serializable {
+public class HadoopRandomAccessFile implements RandomAccessFile, Serializable {
     FileSystem thePrivateFile;
 
     Path path;
