@@ -127,7 +127,7 @@ public class CassandraClient {
                                     new KeyRange().setStart_key(
                                             "".getBytes()).setEnd_key(
                                             "".getBytes()),
-                                    ConsistencyLevel.ONE);
+                                    ConsistencyLevel.ALL);
             List<byte[]> keys = new ArrayList<byte[]>();
             for (KeySlice keySlice : keySlices) {
                 List<ColumnOrSuperColumn> coscs = keySlice.getColumns();
@@ -177,7 +177,7 @@ public class CassandraClient {
                                     new ColumnParent(columnFamily),
                                     new SlicePredicate()
                                             .setColumn_names(converter),
-                                    ConsistencyLevel.ONE);
+                                    ConsistencyLevel.ALL);
             Map<byte[], byte[]> columns = new HashMap<byte[], byte[]>();
             for (ColumnOrSuperColumn cosc : coscs) {
                 Column column = cosc.getColumn();
@@ -213,7 +213,7 @@ public class CassandraClient {
                                             .setColumn_family(columnFamily),
                                     new SlicePredicate()
                                             .setColumn_names(converter),
-                                    ConsistencyLevel.ONE);
+                                    ConsistencyLevel.ALL);
             if (!coscs.isEmpty()) {
                 ColumnOrSuperColumn cosc = coscs.get(0);
                 Column column = cosc.getColumn();
@@ -333,7 +333,7 @@ public class CassandraClient {
             }
         }
         try {
-            thriftClient.batch_mutate(mutationMap, ConsistencyLevel.ONE);
+            thriftClient.batch_mutate(mutationMap, ConsistencyLevel.ALL);
         } catch (Exception e) {
             throw new IOException("Unable to mutate columns for file "
                     + new String(key.array(), "UTF-8"), e);
