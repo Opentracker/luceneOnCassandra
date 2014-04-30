@@ -38,7 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** @lucene.internal */
-public class HadoopFile implements Serializable {
+public class HadoopFile implements File, Serializable {
 
     private static final long serialVersionUID = 1l;
 
@@ -197,14 +197,19 @@ public class HadoopFile implements Serializable {
 
     }
 
-    public boolean isDirectory() throws IOException { // TODO always return
+    public boolean isDirectory() { // TODO always return
                                                       // true.
-        logger.info("isDirectory() {}", thePrivateFile.isDirectory(path));
-        return thePrivateFile.isDirectory(path);// .isDirectory();
+        try {
+            logger.info("isDirectory() {}", thePrivateFile.isDirectory(path));
+            return thePrivateFile.isDirectory(path);// .isDirectory();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return false;
     }
 
-    public String[] list(java.io.FilenameFilter filenameFilter)
-            throws FileNotFoundException, IOException { // TODO return
+    public String[] list(java.io.FilenameFilter filenameFilter) { // TODO return
         // a list of
         // files.
         logger.trace("list(filenameFilter: {})", filenameFilter);
@@ -213,13 +218,26 @@ public class HadoopFile implements Serializable {
                                                        // thePrivateFile.listFiles(null,
                                                        // false)
 
-        RemoteIterator<LocatedFileStatus> ritr =
-                thePrivateFile.listFiles(path, true);
-        while (ritr.hasNext()) {
-            // returns the filename or directory name if directory
-            Path p = ritr.next().getPath();
-            String name = p.getName();
-            theList.add(name);
+        RemoteIterator<LocatedFileStatus> ritr = null;
+        try {
+            ritr = thePrivateFile.listFiles(path, true);
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        try {
+            while (ritr.hasNext()) {
+                // returns the filename or directory name if directory
+                Path p = ritr.next().getPath();
+                String name = p.getName();
+                theList.add(name);
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
         String[] theArray = theList.toArray(new String[theList.size()]);
         Arrays.sort(theArray);
@@ -232,8 +250,14 @@ public class HadoopFile implements Serializable {
         return getPath();
     }
 
-    public long length() throws IOException { // TODO length of the file.
-        long length = thePrivateFile.getFileStatus(path).getLen();
+    public long length() { // TODO length of the file.
+        long length = 0;
+        try {
+            length = thePrivateFile.getFileStatus(path).getLen();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         logger.info("length() {}", length);
         return length;
     }
@@ -249,9 +273,15 @@ public class HadoopFile implements Serializable {
         return false;
     }
 
-    public boolean mkdirs() throws IOException { // TODO just return true.
+    public boolean mkdirs() { // TODO just return true.
         logger.info("mkdirs()");
-        return thePrivateFile.mkdirs(path);
+        try {
+            return thePrivateFile.mkdirs(path);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return false;
     }
 
     // TODO pointer to the right file. like a lot of indices
@@ -316,6 +346,25 @@ public class HadoopFile implements Serializable {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+        return null;
+    }
+
+    @Override
+    public File get(File directory, String name) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public File get(String canonicalPath) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public RandomAccessFile getRandomAccessFile(File fullFile,
+            String permissions) throws FileNotFoundException {
+        // TODO Auto-generated method stub
         return null;
     }
 
