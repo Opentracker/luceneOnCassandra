@@ -81,7 +81,7 @@ public class CSRandomAccessFile  implements Serializable {
     }
 
     public int read(byte[] b, int i, int toRead) throws IOException { //http://docs.oracle.com/javase/7/docs/api/java/io/RandomAccessFile.html#read%28byte[],%20int,%20int%29
-        logger.info("read() {}", currentFile.getFile().getName());
+//        logger.info("read() {}", currentFile.getFile().getName());
         int read = thePrivateFile.read(b,i,toRead);
         logger.info("read int {}", read);
         logger.info("Util.bytesToHex({})", Util.bytesToHex(b));
