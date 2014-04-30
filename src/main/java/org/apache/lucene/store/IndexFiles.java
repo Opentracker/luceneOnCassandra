@@ -10,34 +10,53 @@ import java.util.Date;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.cassandra.ACassandraFile;
+import org.apache.lucene.cassandra.ACassandraRandomAccessFile;
+import org.apache.lucene.cassandra.FSFile;
+import org.apache.lucene.cassandra.FSRandomAccessFile;
 import org.apache.lucene.cassandra.OpentrackerInfoStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.ConcurrentMergeScheduler;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
+import org.apache.lucene.index.LogByteSizeMergePolicy;
+import org.apache.lucene.index.MergePolicy;
+import org.apache.lucene.index.NoMergePolicy;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TieredMergePolicy;
 import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import proj.zoie.api.impl.ZoieMergePolicy;
+
 // http://wiki.apache.org/lucene-java/ImproveIndexingSpeed
+//http://search-lucene.blogspot.nl/2008/08/indexing-speed-factors.html,mergeFactor, X*mergeFactor= maxMergeDocs, 
 public class IndexFiles {
 
-    public static boolean useCassandraStorage = true;
+    public static boolean useCassandraStorage = false;
+
+    public static boolean isCommitTimeBased = true;
+
+    public static boolean useACassandra = false;
+
     public static boolean useNRT = false;
+
     public static boolean useInfoStream = false;
-    
+
     private static Logger logger = LoggerFactory.getLogger(IndexFiles.class);
-    
+
     private static long counter = 0;
-    private static long limit = 100;
+
+    private static long limit = 10781;
 
     public static void main(String[] args) {
+
         String usage =
                 "java org.apache.lucene.demo.IndexFiles"
                         + " [-index INDEX_PATH] [-docs DOCS_PATH] [-update]\n\n"
@@ -51,7 +70,7 @@ public class IndexFiles {
         int blockSize = 16384;
         // index the document with the specified docsPath.
         String docsPath = "test";
-        //docsPath = "/home/results_directory2";
+        // docsPath = "/home/results_directory2";
 
         // when create is false, it will be create or append which means an
         // update.
@@ -69,9 +88,10 @@ public class IndexFiles {
             } else if ("-update".equals(args[i])) {
                 create = false;
             } else if ("-merge".equals(args[i])) {
+                logger.error("force merge");
                 forceMerge = true;
             } else if ("-limit".equals(args[i])) {
-                limit = Long.parseLong(args[i+1]);
+                limit = Long.parseLong(args[i + 1]);
             } else if ("-native".equals(args[i])) {
                 useCassandraStorage = false;
             } else if ("-cfs".equals(args[i])) {
@@ -113,15 +133,26 @@ public class IndexFiles {
             if (useCassandraStorage) {
                 // BLOCKSIZE MINIMUM 16384
                 dir =
-                        org.apache.lucene.cassandra.CassandraDirectory
-                                .open(new org.apache.lucene.cassandra.CassandraFile(
-                                        cassandraDirectory, indexPath, IOContext.DEFAULT,
-                                        true, keyspace, columnFamily, blockSize),
-                                        IOContext.DEFAULT, null, keyspace,
-                                        columnFamily, blockSize, blockSize);
+                        org.apache.lucene.cassandra.CassandraDirectory.open(
+                                new org.apache.lucene.cassandra.CassandraFile(
+                                        cassandraDirectory, indexPath,
+                                        IOContext.DEFAULT, true, keyspace,
+                                        columnFamily, blockSize),
+                                IOContext.DEFAULT, null, keyspace,
+                                columnFamily, blockSize, blockSize);
                 cachedFSDir = new NRTCachingDirectory(dir, 5.0, 60.0);
             } else {
-                dir = FSDirectory.open(new File(indexPath));
+                if (useACassandra)
+                    dir =
+                            org.apache.lucene.cassandra.FSDirectory
+                                    .open(new org.apache.lucene.cassandra.ACassandraFile(
+                                            indexPath));
+                else
+                    dir =
+                            org.apache.lucene.cassandra.FSDirectory
+                                    .open(new org.apache.lucene.cassandra.FSFile(
+                                            indexPath));
+
                 cachedFSDir = new NRTCachingDirectory(dir, 5.0, 60.0);
             }
 
@@ -130,15 +161,49 @@ public class IndexFiles {
             Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_46);
             IndexWriterConfig iwc =
                     new IndexWriterConfig(Version.LUCENE_46, analyzer);
-            logger.info("merge policy = {}", iwc.getMergePolicy().getClass().getName());
-            logger.info("merge scheduler = {} ", iwc.getMergeScheduler().getClass().getName());
+            logger.info("merge policy = {}", iwc.getMergePolicy().getClass()
+                    .getName());
+            logger.info("merge scheduler = {} ", iwc.getMergeScheduler()
+                    .getClass().getName());
+
+//            ZoieMergePolicy opentrackerTieredMergePolicy =
+//             new ZoieMergePolicy(); //600k docs in 1239s (484 docs/s)
+//            opentrackerTieredMergePolicy.setNumLargeSegments(100000);
+//            opentrackerTieredMergePolicy.setMaxSmallSegments(10000);
+
+            // [root@gl04 lucenceOnCassandra]# sh search.sh
+            // search start
+            // searching for: hello
+            // Time: 350ms
+            // 568 total matching documents
+
+//            TieredMergePolicy opentrackerTieredMergePolicy =
+//                    new TieredMergePolicy();// 600k docs in 1490s (402 docs/s)
+            // [root@gl04 lucenceOnCassandra]# sh search.sh
+            // search start
+            // Time: 1088ms
+            // 568 total matching documents
+
+//            LogByteSizeMergePolicy opentrackerTieredMergePolicy =
+//                   new LogByteSizeMergePolicy();// 600korg.apache.lucene.index.
+//            opentrackerTieredMergePolicy.setMaxMergeMB(10);
+//            opentrackerTieredMergePolicy.setMaxMergeMBForForcedMerge(10);
+
+            MergePolicy opentrackerTieredMergePolicy =
+                    NoMergePolicy.NO_COMPOUND_FILES;// 
+
+//            opentrackerTieredMergePolicy.setMaxMergeAtOnce(5); // default 10
+//            opentrackerTieredMergePolicy.setSegmentsPerTier(100); // default 10
+//            opentrackerTieredMergePolicy.setForceMergeDeletesPctAllowed(30.0); // default
+//                                                                               // 10.0
+//            opentrackerTieredMergePolicy.setMaxCFSSegmentSizeMB(10);
+//            opentrackerTieredMergePolicy.setMaxMergedSegmentMB(10);
+//            opentrackerTieredMergePolicy.setMinMergeMB(8);
+            // when you index a lot of documents, enable the following but also,
+            // increase xmx for this jvm.
+            iwc.setRAMBufferSizeMB(512.0);
+            iwc.setMaxThreadStates(24);
             
-            TieredMergePolicy opentrackerTieredMergePolicy = new TieredMergePolicy();
-            opentrackerTieredMergePolicy.setMaxMergeAtOnce(10);  // default 10
-            opentrackerTieredMergePolicy.setSegmentsPerTier(10);   // default 10
-            opentrackerTieredMergePolicy.setForceMergeDeletesPctAllowed(30.0);  // default 10.0
-            opentrackerTieredMergePolicy.setMaxCFSSegmentSizeMB(200);
-            opentrackerTieredMergePolicy.setMaxMergedSegmentMB(5.0);
             double ratio = -1;
             if (useCFS) {
                 ratio = 1;
@@ -147,23 +212,28 @@ public class IndexFiles {
             }
             opentrackerTieredMergePolicy.setNoCFSRatio(ratio);
             iwc.setMergePolicy(opentrackerTieredMergePolicy);
-            
-            
-            // lucene 5.0 
+            // A MergeScheduler that runs each merge using a separate thread.
+            iwc.setMergeScheduler(new ConcurrentMergeScheduler());
+
+            // lucene 5.0
             // iwc.setValidateAtMerge(true)
-            
-            // when you index a lot of documents, enable the following but also,
-            // increase xmx for this jvm.
-            iwc.setRAMBufferSizeMB(512.0);
-            iwc.setMaxThreadStates(20);
-            iwc.setUseCompoundFile(useCFS);
-            
-            // NOTE : turning this on give information about lucene merge details but slow
+
+            // Turn off compound file format.
+            // Call setUseCompoundFile(false). Building the compound file format
+            // takes time during indexing (7-33% in testing for LUCENE-888).
+            // However, note that doing this will greatly increase the number of
+            // file descriptors used by indexing and by searching, so you could
+            // run out of file descriptors if mergeFactor is also large.
+
+            iwc.setUseCompoundFile(useCFS);// false
+
+            // NOTE : turning this on give information about lucene merge
+            // details but slow
             // indexing performance.
             if (useInfoStream) {
                 iwc.setInfoStream(new OpentrackerInfoStream());
             }
-            
+
             if (create) {
                 // create a new index in the directory, removing any previously
                 // indexed documents:
@@ -171,7 +241,6 @@ public class IndexFiles {
             } else {
                 iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
             }
-            
 
             if (useNRT) {
                 writer = new IndexWriter(cachedFSDir, iwc);
@@ -189,18 +258,45 @@ public class IndexFiles {
             // adding documents to it):
             // System.out.println("forcing merge now.");
             if (writer != null && forceMerge) {
-                //writer.forceMerge(50);
-                //writer.commit();
+                // writer.forceMerge(50);
+                // writer.commit();
             }
 
             if (writer != null) {
                 writer.close();
             }
-            
 
             Date end = new Date();
             System.out.println(end.getTime() - start.getTime()
                     + " total milliseconds");
+            logger.error("write/ ms {}/ {} ms",
+                    ACassandraRandomAccessFile.writeCount, ACassandraRandomAccessFile.writeTime);
+            logger.error("read/ ms {}/ {} ms",
+                    ACassandraRandomAccessFile.readCount, ACassandraRandomAccessFile.readTime);
+            logger.error("seek/ ms {}/ {} ms",
+                    ACassandraRandomAccessFile.seekCount, ACassandraRandomAccessFile.seekTime);
+            logger.error("create/ ms {}/ {} ms",
+                    ACassandraFile.createCount, ACassandraFile.createTime);
+            logger.error("delete/ ms {}/ {} ms",
+                    ACassandraFile.deleteCount, ACassandraFile.deleteTime);
+            logger.error("emptyList/ ms {}/ {} ms",
+                    ACassandraFile.emptyListCount, ACassandraFile.emptyListTime);
+            logger.error("exists/ ms {}/ {} ms",
+                    ACassandraFile.existsCount, ACassandraFile.existsTime);
+            logger.error("list/ ms {}/ {} ms",
+                    ACassandraFile.listCount, ACassandraFile.listTime);
+            logger.error("getACF/ ms {}/ {} ms",
+                    ACassandraFile.getACFCount, ACassandraFile.getACFTime);
+            logger.error("getDNC/ ms {}/ {} ms",
+                    ACassandraFile.getDNCount, ACassandraFile.getDNTime);
+            logger.error("getRAF/ ms {}/ {} ms",
+                    ACassandraFile.getRAFCount, ACassandraFile.getRAFTime);
+            logger.error("write file/ ms {}/ {} ms",
+                    ACassandraFile.writeCount, ACassandraFile.writeTime);
+            logger.error("getDNC file/ ms {}/ {} ms",
+                    FSFile.getDNCount, FSFile.getDNTime);
+            logger.error("write file/ ms {}/ {} ms",
+                    FSRandomAccessFile.writeCount, FSRandomAccessFile.writeTime);
 
         } catch (IOException e) {
             System.out.println(" caught a " + e.getClass()
@@ -237,6 +333,8 @@ public class IndexFiles {
      * @throws IOException
      *             If there is a low-level I/O error
      */
+    static long time = System.currentTimeMillis();
+
     public static void indexDocs(IndexWriter writer, File file,
             boolean forceMerge) {
         // do not try to index files that cannot be read
@@ -331,30 +429,50 @@ public class IndexFiles {
                     } finally {
                         fis.close();
                     }
-                    
-                    if (forceMerge && counter != 0 && counter % 10 == 0 && writer.hasUncommittedChanges()) {
+
+                    long diff = System.currentTimeMillis() - time;
+                    // forceMerge && counter != 0 && counter % 5000 == 0
+                    // && writer.hasUncommittedChanges() ||
+                    if ((forceMerge && isCommitTimeBased && diff > 5000 && writer
+                            .hasUncommittedChanges())) {
                         writer.prepareCommit();
                         writer.commit();
-                        //System.gc();
+                        // TODO close it and reopen, maybe write a better class for this new design.
+                        // System.gc();
+                        time = System.currentTimeMillis();
                         Runtime runtime = Runtime.getRuntime();
-                        logger.error("use memory {}/{} byte", (runtime.totalMemory() - runtime.freeMemory()), runtime.totalMemory());
+                        logger.error("use memory {}/{} byte",
+                                (runtime.totalMemory() - runtime.freeMemory()),
+                                runtime.totalMemory());
+                        logger.error("write/ ms {}/ {} ms",
+                                ACassandraRandomAccessFile.writeCount, ACassandraRandomAccessFile.writeTime);
+                        logger.error("read/ ms {}/ {} ms",
+                                ACassandraRandomAccessFile.readCount, ACassandraRandomAccessFile.readTime);
+                        logger.error("seek/ ms {}/ {} ms",
+                                ACassandraRandomAccessFile.seekCount, ACassandraRandomAccessFile.seekTime);
+                        logger.error("sync/ ms {}/ {} ms",
+                                ACassandraRandomAccessFile.syncCount, ACassandraRandomAccessFile.syncTime);
+
                     }
                 }
             }
         } catch (OutOfMemoryError e) {
-            // TODO maybe do error handling here. like notify monitoring system / sms
+            // TODO maybe do error handling here. like notify monitoring system
+            // / sms
             // log current memory into the system.
             logger.error("running out of memory!!! increase memory ", e);
             Runtime runtime = Runtime.getRuntime();
-            logger.error("use memory {}/{} byte", (runtime.totalMemory() - runtime.freeMemory()), runtime.totalMemory());
+            logger.error("use memory {}/{} byte",
+                    (runtime.totalMemory() - runtime.freeMemory()),
+                    runtime.totalMemory());
             return;
         } catch (IOException e) {
             logger.error("unable to index file " + file, e);
-            // TODO, maybe do error handling here. like notify monitoring system / sms
+            // TODO, maybe do error handling here. like notify monitoring system
+            // / sms
             // and also put into queue and redo it again later.
         } catch (Error e) {
             logger.error("error caught ", e);
         }
     }
-
 }
