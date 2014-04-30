@@ -49,5 +49,17 @@ public class Util {
         int sep = abs.lastIndexOf("/");
         return abs.substring(0, sep) + "/";
     }
+
+    public static String getFileName(File file) {
+        String abs = file.getAbsolutePath();
+        int sep = abs.lastIndexOf("/");
+        return abs.substring(sep + 1, abs.length());
+    }
     
+    public static String getCassandraPath(File file) {
+        String abs = file.getAbsolutePath();
+        int sep = abs.lastIndexOf("/");
+        return abs.substring(0, sep) + "/";
+    }
+
 }
