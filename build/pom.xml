@@ -14,27 +14,30 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
    <modelVersion>4.0.0</modelVersion>
-
+   <parent>
+      <groupId>org.apache</groupId>
+      <artifactId>apache</artifactId>
+      <version>9</version>
+   </parent>
    <groupId>org.apache.lucene.store</groupId>
-   <artifactId>cassandra</artifactId>
-   <version>0.1-SNAPSHOT</version>
+   <artifactId>luceneOnCassandra-module</artifactId>
+   <version>0.0.1-SNAPSHOT</version>
    <name>Lucene on Cassandra</name>
-   <description></description>
+   <description>Store lucene indices on cassandra</description>
 
    <packaging>jar</packaging>
 
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <project.basedir>/home/jason/work/svn/luceneOnCassandra</project.basedir>
-      <project.cassandra>/home/jason/work/svn/luceneOnCassandra/lib/apache-cassandra-1.0.8.jar</project.cassandra>
-      <project.libthrift>/home/jason/work/svn/luceneOnCassandra/lib/libthrift-0.6.jar</project.libthrift>
-      <project.commons.lang>/home/jason/work/svn/luceneOnCassandra/lib/commons-lang-2.4.jar</project.commons.lang>
-      <project.com.google.guava>/home/jason/work/svn/luceneOnCassandra/lib/guava-r08.jar</project.com.google.guava>
-      <project.hadoop.core>/home/jason/work/svn/luceneOnCassandra/lib/hadoop-core-0.20.203.1-brisk1-beta2.jar</project.hadoop.core>
-      <project.brisk>/home/jason/work/svn/luceneOnCassandra/lib/brisk-1.0~beta2.jar</project.brisk>
-      <project.hadoop.common>/home/jason/work/svn/luceneOnCassandra/lib/hadoop-common-2.2.0.jar</project.hadoop.common>
-      <project.hector.opentracker>/home/jason/work/svn/luceneOnCassandra/lib/hector-core-1.0-3-opentracker.jar</project.hector.opentracker>
-      <project.zoie.core>/home/jason/work/svn/luceneOnCassandra/lib/zoie-core-3.2.0.jar</project.zoie.core>
+      <project.cassandra>${project.basedir}/../lib/apache-cassandra-1.0.8.jar</project.cassandra>
+      <project.libthrift>${project.basedir}/../lib/libthrift-0.6.jar</project.libthrift>
+      <project.commons.lang>${project.basedir}/../lib/commons-lang-2.4.jar</project.commons.lang>
+      <project.com.google.guava>${project.basedir}/../lib/guava-r08.jar</project.com.google.guava>
+      <project.hadoop.core>${project.basedir}/../lib/hadoop-core-0.20.203.1-brisk1-beta2.jar</project.hadoop.core>
+      <project.brisk>${project.basedir}/../lib/brisk-1.0~beta2.jar</project.brisk>
+      <project.hadoop.common>${project.basedir}/../lib/hadoop-common-2.2.0.jar</project.hadoop.common>
+      <project.hector.opentracker>${project.basedir}/../lib/hector-core-1.0-3-opentracker.jar</project.hector.opentracker>
+      <project.zoie.core>${project.basedir}/../lib/zoie-core-3.2.0.jar</project.zoie.core>
    </properties>
 
    <build>
@@ -85,6 +88,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.4.3</version>
             <configuration>
                <systemProperties>
                   <property>
