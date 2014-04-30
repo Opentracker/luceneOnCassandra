@@ -81,7 +81,8 @@ public class SimpleFSDirectory extends FSDirectory {
   public IndexInput openInput(String name, IOContext context) throws IOException {
     ensureOpen();
     logger.info("openInput name {}", name);
-    final File path = new File(directory, name);
+//    final File path = new File(directory, name);
+    final File path = directory.get(directory, name);
     return new SimpleFSIndexInput("SimpleFSIndexInput(path=\"" + path.getPath() + "\")", path, context);
   }
 
@@ -90,8 +91,12 @@ public class SimpleFSDirectory extends FSDirectory {
       final IOContext context) throws IOException {
     ensureOpen();
     logger.info("createSlicer name {}", name);
-    final File file = new File(getDirectory(), name);
-    final RandomAccessFile descriptor = new RandomAccessFile(file, "r");
+//    final File file = new File(getDirectory(), name);
+    File directory = getDirectory();
+    final File file = directory.get(directory, name);
+//    final RandomAccessFile descriptor = new RandomAccessFile(file, "r");
+    final RandomAccessFile descriptor = file.getRandomAccessFile(file, "r");
+
     return new IndexInputSlicer() {
 
       @Override
