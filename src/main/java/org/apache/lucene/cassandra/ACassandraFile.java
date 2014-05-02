@@ -74,7 +74,7 @@ public class ACassandraFile implements File, Closeable, MonitorType {
             getDNTime += System.currentTimeMillis() - ms;
             return acf;
         } catch (IOException e) {
-            // TODO Auto-generated catch block
+            logger.error("File get didnt work", e);
             e.printStackTrace();
             throw new RuntimeException("File get didnt work");
         }
