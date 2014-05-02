@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import junit.framework.TestCase;
 
-// TODO, rewrite this test case to reference CassandraDirectory in org.apache.lucene.cassandra
 public class TestWriteRead extends TestCase {
 
     CassandraDirectory cassandraDirectory;
@@ -41,14 +40,13 @@ public class TestWriteRead extends TestCase {
     public void testReadFile() throws IOException {
         IndexInput indexInput =
                 cassandraDirectory.openInput("hello.txt", IOContext.DEFAULT);
-        String[] values = cassandraDirectory.listAll();
         String fileContent = indexInput.readString();
-        System.out.println("test1 => " + fileContent);
+        assertEquals("hello sun", fileContent);
 
         indexInput =
                 cassandraDirectory.openInput("hihi.txt", IOContext.DEFAULT);
         fileContent = indexInput.readString();
-        System.out.println("test2 => " + fileContent);
+        assertEquals("hihi worl\n", fileContent);
     }
 
     public void testUpdate() {
@@ -63,8 +61,7 @@ public class TestWriteRead extends TestCase {
         IndexInput indexInput =
                 cassandraDirectory.openInput("segments_1", IOContext.DEFAULT);
         String actualDataPoint = indexInput.readString();
-        System.out.println("actualDataPoint '" + actualDataPoint +"'");  
-        
+        assertEquals("hihi worl\n", actualDataPoint);
     }
 
 }
