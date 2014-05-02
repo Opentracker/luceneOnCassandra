@@ -102,7 +102,6 @@ public class CassandraSimpleFSLockFactory extends CassandraFSLockFactory {
           throw new IOException("Cannot create directory: " +
                                 lockDir.getAbsolutePath());
       } else if (!lockDir.isDirectory()) {
-        // TODO: NoSuchDirectoryException instead?
         throw new IOException("Found regular file where directory expected: " + 
                               lockDir.getAbsolutePath());
       }
