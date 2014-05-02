@@ -5,9 +5,10 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
@@ -59,7 +60,7 @@ public class TestCassandraClient {
         try {
             
             ByteBuffer insertKey = ByteBufferUtil.bytes("sampleFile");
-            Map<byte[], byte[]> columns = new TreeMap<byte[], byte[]>();
+            Map<byte[], byte[]> columns = new LinkedHashMap<byte[], byte[]>();
             columns.put("DESCRIPTOR".getBytes(), "{\"lastModified\":1397557341307,\"name\":\"/DESCRIPTOR\",\"length\":0,\"blocks\":[],\"deleted\":false,\"lastAccessed\":1397557341307}".getBytes());
 
             cc.setColumns(insertKey, columns);
@@ -81,7 +82,7 @@ public class TestCassandraClient {
     @Test
     public void testGetColumns() {
         byte[] key = "sampleFile".getBytes();
-        Set<byte[]> columns = new TreeSet<byte[]>();  
+        Set<byte[]> columns = new LinkedHashSet<byte[]>();  
         columns.add("DESCRIPTOR".getBytes());
         
         try {
@@ -101,7 +102,7 @@ public class TestCassandraClient {
     public void testGetColumn() {
         
         ByteBuffer insertKey = ByteBufferUtil.bytes("sampleFile");
-        Map<byte[], byte[]> columns = new TreeMap<byte[], byte[]>();
+        Map<byte[], byte[]> columns = new LinkedHashMap<byte[], byte[]>();
         columns.put("DESCRIPTOR".getBytes(), "descriptor value".getBytes());
 
         
@@ -124,7 +125,7 @@ public class TestCassandraClient {
     @Test
     public void testSetColumns() {
         ByteBuffer key = ByteBufferUtil.bytes("data2");
-        Map<byte[], byte[]> columns = new TreeMap<byte[], byte[]>();
+        Map<byte[], byte[]> columns = new LinkedHashMap<byte[], byte[]>();
         columns.put("column1".getBytes(), "column1 value".getBytes());
         
         try {
