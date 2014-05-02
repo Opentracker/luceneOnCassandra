@@ -1,6 +1,5 @@
 package org.apache.lucene.cassandra;
 
-import java.io.SyncFailedException;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
