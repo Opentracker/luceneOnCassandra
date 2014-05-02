@@ -59,8 +59,7 @@ public class TestIndexingSearching {
              * index 1 time on directory A
              * and index 1 more time on the same directory A
              * search and the result should be same.
-             * 
-             * TODO make a better indexing constructor and method. 
+             *  
              */
             String[] args = {"-cfs", "-docs", testFilePath,  "-index", "index1", "-keyspace", "lucene1", "-column-family", "index1"};
             
@@ -98,8 +97,7 @@ public class TestIndexingSearching {
             /* index 1 time 
              * find the term which is not available
              * index again on the directory but include the term.
-             * find the term which is now available.
-             * TODO make a better indexing constructor and method. 
+             * find the term which is now available. 
              */
             String[] args = {"-update", "-docs", testFilePath, "-index", "index1", "-keyspace", "lucene1", "-column-family", "index1"};
             IndexFiles.main(args);
@@ -145,8 +143,7 @@ public class TestIndexingSearching {
             /* index 1 time 
              * find the term which is not available
              * index again on the directory but include the term.
-             * find the term which is now available.
-             * TODO make a better indexing constructor and method. 
+             * find the term which is now available. 
              */
             String[] args = {"-update", "-merge", "-docs", testFilePath, "-index", "index1", "-keyspace", "lucene1", "-column-family", "index1"};
             IndexFiles.main(args);
