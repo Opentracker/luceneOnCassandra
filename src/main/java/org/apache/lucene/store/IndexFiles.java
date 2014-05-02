@@ -43,7 +43,7 @@ public class IndexFiles {
 
     public static boolean isCommitTimeBased = true;
 
-    public static boolean useACassandra = false;
+    public static boolean useACassandra = true;
 
     public static boolean useNRT = false;
 
