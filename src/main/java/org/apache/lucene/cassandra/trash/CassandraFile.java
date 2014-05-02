@@ -6,7 +6,6 @@ import java.io.Serializable;
 import java.util.Comparator;
 
 import org.apache.lucene.store.AlreadyClosedException;
-import org.apache.lucene.store.CassandraDirectory.FileDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -165,7 +164,6 @@ public class CassandraFile implements Serializable {
      *             If <code>child</code> is <code>null</code>
      */
     public CassandraFile(CassandraFile file, String file2) {
-        // TODO Auto-generated constructor stub
     }
 
     /**
@@ -179,7 +177,6 @@ public class CassandraFile implements Serializable {
      *             If the <code>pathname</code> argument is <code>null</code>
      */
     public CassandraFile(String canonicalPath) {
-        // TODO Auto-generated constructor stub
     }
 
     /**
@@ -195,7 +192,6 @@ public class CassandraFile implements Serializable {
      *             method denies read access to the file or directory
      */
     public boolean exists() {
-        // TODO Auto-generated method stub
         return false;
     }
 
@@ -226,7 +222,6 @@ public class CassandraFile implements Serializable {
      * @since 1.2
      */
     public boolean createNewFile() {
-        // TODO Auto-generated method stub
         return false;
     }
 
@@ -244,7 +239,6 @@ public class CassandraFile implements Serializable {
      *             delete access to the file
      */
     public boolean delete() {
-        // TODO Auto-generated method stub
         return false;
     }
 
@@ -289,7 +283,6 @@ public class CassandraFile implements Serializable {
      * @see java.io.File#isAbsolute()
      */
     public String getAbsolutePath() {
-        // TODO Auto-generated method stub
         return "/";
     }
 
@@ -333,7 +326,6 @@ public class CassandraFile implements Serializable {
      * @since JDK1.1
      */
     public String getCanonicalPath() {
-        // TODO Auto-generated method stub
         return "/";
     }
 
@@ -345,7 +337,6 @@ public class CassandraFile implements Serializable {
      * @return The string form of this abstract pathname
      */
     public String getPath() {
-        // TODO Auto-generated method stub
         return "/";
     }
 
@@ -377,7 +368,6 @@ public class CassandraFile implements Serializable {
      *             access to the directory
      */
     public String[] list(FilenameFilter filenameFilter) {
-        // TODO Auto-generated method stub
         return null;
     }
 
