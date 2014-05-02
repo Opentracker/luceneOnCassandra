@@ -77,6 +77,7 @@ public class CassandraFile implements Closeable, MonitorType {
             } else {
                 length = fd.getLength();
                 currentBlock = fd.getFirstBlock();
+                lastModified = fd.getLastModified();
             }
             if (mode.context == IOContext.Context.MERGE) {
                 isModeMerge = true;
