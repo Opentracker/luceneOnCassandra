@@ -232,14 +232,4 @@ public class TestFileDescriptor {
         }
     }
 
-    @Test
-    public void testSync() {
-        // TODO
-    }
-
-    @Test
-    public void testValid() {
-        // TODO
-    }
-
 }
