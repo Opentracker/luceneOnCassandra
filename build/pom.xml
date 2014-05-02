@@ -51,8 +51,8 @@
             <artifactId>maven-compiler-plugin</artifactId>
             <version>3.1</version>
             <configuration>
-               <source>1.6</source>
-               <target>1.6</target>
+               <source>1.7</source>
+               <target>1.7</target>
                <!-- TODO we shouldn't exclude it. we did it here because the symbol 
                   cannot find find in the classpath when the hadoop-common is alreayd included 
                   in the classpath. this is not issue for now because we are not using hadoop.. 
