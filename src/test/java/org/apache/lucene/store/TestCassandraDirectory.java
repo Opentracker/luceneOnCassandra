@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
 
-//TODO, rewrite this test case to reference CassandraDirectory in org.apache.lucene.cassandra
 public class TestCassandraDirectory extends TestCase {
 
     CassandraDirectory cassandraDirectory;
