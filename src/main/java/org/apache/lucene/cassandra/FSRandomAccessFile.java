@@ -18,7 +18,6 @@ package org.apache.lucene.cassandra;
  */
 
 import java.io.Closeable;
-import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 //import java.util.ArrayList;
@@ -49,7 +48,7 @@ public class FSRandomAccessFile implements RandomAccessFile, Serializable {
         try {
             logger.info("RandomAccessFile(File path {}, permission {} )", path.getCanonicalPath(), permission);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
+            logger.error("", e);
             e.printStackTrace();
         }
         // currentFile = path;
@@ -60,7 +59,7 @@ public class FSRandomAccessFile implements RandomAccessFile, Serializable {
                 this.path = path.getCanonicalPath();
                 path.createNewFile();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
+                logger.error("", e);
                 e.printStackTrace();
             }
 
@@ -68,7 +67,7 @@ public class FSRandomAccessFile implements RandomAccessFile, Serializable {
                     new java.io.RandomAccessFile(path.getCanonicalPath(),
                             permission);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
+            logger.error("", e);
             e.printStackTrace();
         }
     }
@@ -125,7 +124,7 @@ public class FSRandomAccessFile implements RandomAccessFile, Serializable {
         return read;
     }
 
-    public Closeable getFile() { // TODO dont need
+    public Closeable getFile() {
         logger.info("getFile()");
         return (Closeable) thePrivateFile;
     }
