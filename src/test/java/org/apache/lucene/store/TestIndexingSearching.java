@@ -44,6 +44,7 @@ public class TestIndexingSearching {
         }
         
         assertNotNull(client);
+        client.truncate("index1");
     }
 
     @After
