@@ -1,18 +1,47 @@
 package org.apache.lucene.store;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
 import java.io.IOException;
+
+import org.apache.lucene.cassandra.CassandraClient;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
 
 import junit.framework.TestCase;
 
 public class TestWriteRead extends TestCase {
 
     CassandraDirectory cassandraDirectory;
-
-    public void setUp() throws IOException {
-        cassandraDirectory =
-                new CassandraDirectory("lucene1", "index1", 10, 10);
+    static CassandraClient client = null;
+    
+    @BeforeClass
+    public static void setUpBeforeClass() throws Exception {
+        try {
+            client = new CassandraClient("localhost", 9160, true, "lucene1", "index1", 16384);
+        } catch (IOException e) {
+            fail("exception is not expected");
+        }
+        
+        assertNotNull(client);
+        client.truncate("index1");
     }
 
+    @AfterClass
+    public static void tearDownAfterClass() throws Exception {
+        client.truncate("index1");
+    }
+
+    @Before
+    public void setUp() throws IOException {
+        cassandraDirectory =
+                new CassandraDirectory("lucene1", "index1", 100, 100);
+    }
+
+    @After
     public void tearDown() throws IOException {
         if (cassandraDirectory != null) {
             cassandraDirectory.close();
@@ -46,7 +75,7 @@ public class TestWriteRead extends TestCase {
         indexInput =
                 cassandraDirectory.openInput("hihi.txt", IOContext.DEFAULT);
         fileContent = indexInput.readString();
-        assertEquals("hihi worl\n", fileContent);
+        assertEquals("hihi world", fileContent);
     }
 
     public void testUpdate() {
@@ -61,7 +90,7 @@ public class TestWriteRead extends TestCase {
         IndexInput indexInput =
                 cassandraDirectory.openInput("segments_1", IOContext.DEFAULT);
         String actualDataPoint = indexInput.readString();
-        assertEquals("hihi worl\n", actualDataPoint);
+        assertEquals("hihi world", actualDataPoint);
     }
 
 }
