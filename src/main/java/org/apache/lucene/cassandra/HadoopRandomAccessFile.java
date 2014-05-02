@@ -17,9 +17,6 @@ package org.apache.lucene.cassandra;
  * limitations under the License.
  */
 
-import java.io.Closeable;
-import java.io.FileDescriptor;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 //import java.util.ArrayList;
 import java.io.Serializable;
@@ -131,12 +128,6 @@ public class HadoopRandomAccessFile implements RandomAccessFile, Serializable {
 
         return read;
     }
-
-    // // public CassandraFile getFile() { // TODO dont need
-    // public CassandraRandomAccessFile getFile() { // TODO dont need
-    // logger.info("getFile()");
-    // return thePrivateFile;
-    // }
 
     public void getFDsync() throws SyncFailedException, IOException {
         logger.info("getFDsync()");
