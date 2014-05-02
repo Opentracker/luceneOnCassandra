@@ -103,7 +103,6 @@ public class CassandraClient {
      * @param framed
      *            a flag indicating whether or not to use a framed transport
      * @param cassandraDirectory
-     *            TODO
      * @throws IOException
      */
     public CassandraClient() throws IOException {
@@ -334,7 +333,6 @@ public class CassandraClient {
                 logger.debug("columnName => {} columnValue => {}", new String(
                         column, "UTF-8"), new String(value, "UTF-8"));
                 boolean isDelete = false;
-                // TODO something goes wrong here.. .don't know how to fix
                 // yet.
                 /*
                  * if (value != null) { FileDescriptor fd =
