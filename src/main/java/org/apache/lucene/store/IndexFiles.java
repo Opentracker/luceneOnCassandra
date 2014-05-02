@@ -54,6 +54,55 @@ public class IndexFiles {
     private static long counter = 0;
 
     private static long limit = 10781;
+    
+    public IndexFiles() {
+        
+    }
+    
+    public static MergePolicy getPolicy(String policy, double ratio) {
+        MergePolicy usePolicy = null;
+        switch (policy) {
+        case "zoie":
+            //600k docs in 1239s (484 docs/s)
+            ZoieMergePolicy zmp = new ZoieMergePolicy();
+            zmp.setNumLargeSegments(100000);
+            zmp.setMaxSmallSegments(10000);
+            usePolicy = zmp;
+            // [root@gl04 lucenceOnCassandra]# sh search.sh
+            // search start
+            // searching for: hello
+            // Time: 350ms
+            // 568 total matching documents
+            break;
+        case "logbyte":
+            // 600korg.apache.lucene.index.
+            LogByteSizeMergePolicy opentrackerTieredMergePolicy = new LogByteSizeMergePolicy();
+            opentrackerTieredMergePolicy.setMaxMergeMB(10);
+            opentrackerTieredMergePolicy.setMaxMergeMBForForcedMerge(10);
+            usePolicy = opentrackerTieredMergePolicy;
+            break;
+        case "none":
+            MergePolicy none = NoMergePolicy.NO_COMPOUND_FILES;//
+            usePolicy = none;
+        default:
+            // 600k docs in 1490s (402 docs/s)
+            TieredMergePolicy tmp = new TieredMergePolicy();
+            // [root@gl04 lucenceOnCassandra]# sh search.sh
+            // search start
+            // Time: 1088ms
+            // 568 total matching documents
+            tmp.setMaxMergeAtOnce(5); // default 10
+            tmp.setSegmentsPerTier(100); // default 10
+            tmp.setForceMergeDeletesPctAllowed(30.0); // default 10.0
+            tmp.setNoCFSRatio(ratio);
+            //opentrackerTieredMergePolicy.setMaxCFSSegmentSizeMB(10);
+            //opentrackerTieredMergePolicy.setMaxMergedSegmentMB(10);
+            //opentrackerTieredMergePolicy.setMinMergeMB(8);
+            usePolicy = tmp;
+        }
+        
+        return usePolicy;
+    }
 
     public static void main(String[] args) {
 
@@ -70,7 +119,6 @@ public class IndexFiles {
         int blockSize = 16384;
         // index the document with the specified docsPath.
         String docsPath = "test";
-        // docsPath = "/home/results_directory2";
 
         // when create is false, it will be create or append which means an
         // update.
@@ -166,39 +214,7 @@ public class IndexFiles {
             logger.info("merge scheduler = {} ", iwc.getMergeScheduler()
                     .getClass().getName());
 
-//            ZoieMergePolicy opentrackerTieredMergePolicy =
-//             new ZoieMergePolicy(); //600k docs in 1239s (484 docs/s)
-//            opentrackerTieredMergePolicy.setNumLargeSegments(100000);
-//            opentrackerTieredMergePolicy.setMaxSmallSegments(10000);
-
-            // [root@gl04 lucenceOnCassandra]# sh search.sh
-            // search start
-            // searching for: hello
-            // Time: 350ms
-            // 568 total matching documents
-
-//            TieredMergePolicy opentrackerTieredMergePolicy =
-//                    new TieredMergePolicy();// 600k docs in 1490s (402 docs/s)
-            // [root@gl04 lucenceOnCassandra]# sh search.sh
-            // search start
-            // Time: 1088ms
-            // 568 total matching documents
-
-//            LogByteSizeMergePolicy opentrackerTieredMergePolicy =
-//                   new LogByteSizeMergePolicy();// 600korg.apache.lucene.index.
-//            opentrackerTieredMergePolicy.setMaxMergeMB(10);
-//            opentrackerTieredMergePolicy.setMaxMergeMBForForcedMerge(10);
-
-            MergePolicy opentrackerTieredMergePolicy =
-                    NoMergePolicy.NO_COMPOUND_FILES;// 
-
-//            opentrackerTieredMergePolicy.setMaxMergeAtOnce(5); // default 10
-//            opentrackerTieredMergePolicy.setSegmentsPerTier(100); // default 10
-//            opentrackerTieredMergePolicy.setForceMergeDeletesPctAllowed(30.0); // default
-//                                                                               // 10.0
-//            opentrackerTieredMergePolicy.setMaxCFSSegmentSizeMB(10);
-//            opentrackerTieredMergePolicy.setMaxMergedSegmentMB(10);
-//            opentrackerTieredMergePolicy.setMinMergeMB(8);
+ 
             // when you index a lot of documents, enable the following but also,
             // increase xmx for this jvm.
             iwc.setRAMBufferSizeMB(512.0);
@@ -210,8 +226,7 @@ public class IndexFiles {
             } else {
                 ratio = 0;
             }
-            opentrackerTieredMergePolicy.setNoCFSRatio(ratio);
-            iwc.setMergePolicy(opentrackerTieredMergePolicy);
+            iwc.setMergePolicy(getPolicy("tiered", ratio));
             // A MergeScheduler that runs each merge using a separate thread.
             iwc.setMergeScheduler(new ConcurrentMergeScheduler());
 
