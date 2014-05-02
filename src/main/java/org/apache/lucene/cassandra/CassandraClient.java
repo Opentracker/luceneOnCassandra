@@ -30,9 +30,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
 
-// TODO should use hector.
 public class CassandraClient {
     protected Cassandra.Client thriftClient;
     String keyspace;
@@ -276,14 +274,6 @@ public class CassandraClient {
                 byte[] column = columnValue.getKey(), value =
                         columnValue.getValue();
                 boolean isDelete = false;
-                // TODO something goes wrong here.. .don't know how to fix
-                // yet.
-                /*
-                 * if (value != null) { FileDescriptor fd =
-                 * FileDescriptorUtils.fromBytes(value); if (fd == null ||
-                 * fd.isDeleted()) { System.out.println("entered!");
-                 * isDelete = true; } }
-                 */
                 if (value == null || isDelete) {
                     Deletion deletion = new Deletion();
                     deletion.setTimestamp(System.currentTimeMillis());
