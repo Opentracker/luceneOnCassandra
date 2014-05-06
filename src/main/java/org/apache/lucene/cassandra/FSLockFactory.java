@@ -64,5 +64,10 @@ public abstract class FSLockFactory extends LockFactory {
   public File getLockDir() {
     return lockDir;
   }
+  
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName() + "@" + lockDir;
+  }
 
 }
