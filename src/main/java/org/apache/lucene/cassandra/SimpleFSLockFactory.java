@@ -103,7 +103,6 @@ public class SimpleFSLockFactory extends FSLockFactory {
       if (lockPrefix != null) {
         lockName = lockPrefix + "-" + lockName;
       }
-//      File lockFile = new File(lockDir, lockName);
       File lockFile = lockDir.get(lockDir, lockName);
       if (lockFile.exists() && !lockFile.delete()) {
         throw new IOException("Cannot delete " + lockFile);
@@ -119,7 +118,6 @@ class SimpleFSLock extends Lock {
 
   public SimpleFSLock(File lockDir, String lockFileName) {
     this.lockDir = lockDir;
-//    lockFile = new File(lockDir, lockFileName);
     lockFile = lockDir.get(lockDir, lockFileName);
   }
 
