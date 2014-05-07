@@ -1,6 +1,24 @@
 package org.apache.lucene.cassandra;
 
-import static java.util.Collections.synchronizedSet;
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+import org.apache.lucene.util.Constants;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -23,6 +41,8 @@ import org.apache.lucene.store.NoSuchDirectoryException;
 import org.apache.lucene.util.ThreadInterruptedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.util.Collections.synchronizedSet;
 
 /**
  * Base class for Directory implementations that store index
@@ -136,8 +156,7 @@ public abstract class CassandraDirectory extends BaseDirectory {
   protected CassandraDirectory(CassandraFile path, IOContext mode, LockFactory lockFactory, String keyspace, String columnFamily, int blockSize, int bufferSize) throws IOException {
     // new ctors use always NativeFSLockFactory as default:
     if (lockFactory == null) {
-      //lockFactory = new CassandraSimpleFSLockFactory();
-      lockFactory = new CassandraSimpleFSLockFactory(path, Util.getFileName(path), mode, true, keyspace, columnFamily, blockSize);
+      lockFactory = new CassandraNativeFSLockFactory(path, Util.getFileName(path), mode, true, keyspace, columnFamily, blockSize);
     }
     this.keyspace = keyspace;
     this.columnFamily = columnFamily;
@@ -146,7 +165,6 @@ public abstract class CassandraDirectory extends BaseDirectory {
     this.mode = mode;
     directory = getCanonicalPath(path, mode, keyspace, columnFamily, blockSize);
     logger.trace("path is {}", path.getName());
-    //logger.info(String.format("keyspace %s blockSize %s bufferSize %s", keyspace, blockSize, bufferSize));
 
     if (directory.exists() && !directory.isDirectory())
       throw new NoSuchDirectoryException("file '" + directory + "' exists but is not a directory");
@@ -191,7 +209,16 @@ public abstract class CassandraDirectory extends BaseDirectory {
   
   public static CassandraDirectory open(CassandraFile path, IOContext mode, LockFactory lockFactory, String keyspace, String columnFamily, int blockSize, int bufferSize) throws IOException {
       logger.info("initializing CassandraDirectory path {} lockFactory {}", path.getName(), lockFactory);
-      return new SimpleCassandraDirectory(path, mode, lockFactory, keyspace, columnFamily, blockSize, bufferSize);
+      if ((Constants.WINDOWS || Constants.SUN_OS || Constants.LINUX)
+                   && Constants.JRE_IS_64BIT && MMapDirectory.UNMAP_SUPPORTED) {
+         //return new MMapDirectory(path, lockFactory);
+      } else if (Constants.WINDOWS) {
+         //return new SimpleFSDirectory(path, lockFactory);
+      } else {
+         //return new NIOFSDirectory(path, lockFactory);
+         //return new SimpleCassandraDirectory(path, mode, lockFactory, keyspace, columnFamily, blockSize, bufferSize);
+      }
+    return new SimpleCassandraDirectory(path, mode, lockFactory, keyspace, columnFamily, blockSize, bufferSize);
   }
 
   @Override
@@ -200,8 +227,8 @@ public abstract class CassandraDirectory extends BaseDirectory {
 
     // for filesystem based LockFactory, delete the lockPrefix, if the locks are placed
     // in index dir. If no index dir is given, set ourselves
-    if (lockFactory instanceof CassandraSimpleFSLockFactory) {
-      final CassandraSimpleFSLockFactory lf = (CassandraSimpleFSLockFactory) lockFactory;
+    if (lockFactory instanceof CassandraFSLockFactory) {
+      final CassandraFSLockFactory lf = (CassandraFSLockFactory) lockFactory;
       final CassandraFile dir = lf.getLockDir();
       // if the lock factory has no lockDir set, use the this directory as lockDir
       if (dir == null) {
@@ -267,21 +294,10 @@ public abstract class CassandraDirectory extends BaseDirectory {
   public boolean fileExists(String name) {
     ensureOpen();
     logger.trace("fileExists {}", name);
-    //CassandraFile file = new CassandraFile(directory, name);
     CassandraFile file = new CassandraFile(Util.getCassandraPath(directory), name, IOContext.READ, true, this.keyspace, this.columnFamily, this.blockSize);
     boolean isFileExists = file.exists(); 
     file.close();
     return isFileExists;
-  }
-
-  /** Returns the time the named file was last modified. */
-  public long fileModified(CassandraFile directory, String name) {
-      logger.trace("fileModified {}", name);
-      //CassandraFile file = new CassandraFile(directory, name);
-      CassandraFile file = new CassandraFile(Util.getCassandraPath(directory), name, IOContext.READ, true, keyspace, columnFamily, this.blockSize);
-      long lastModified = file.lastModified();
-      file.close();
-    return lastModified;
   }
 
   /** Returns the length in bytes of a file in the directory. */
@@ -289,7 +305,6 @@ public abstract class CassandraDirectory extends BaseDirectory {
   public long fileLength(String name) throws IOException {
     ensureOpen();
     logger.trace("fileLength {}", name);
-    //CassandraFile file = new CassandraFile(directory, name);
     CassandraFile file = new CassandraFile(Util.getCassandraPath(directory), name, IOContext.READ, true, keyspace, columnFamily, this.blockSize);
     final long len = file.length();
     file.close();
@@ -306,7 +321,6 @@ public abstract class CassandraDirectory extends BaseDirectory {
   public void deleteFile(String name) throws IOException {
     ensureOpen();
     logger.trace("deleteFile {}", name);
-    //CassandraFile file = new CassandraFile(directory, name);
     // do not create the descriptor file during deleting, just does not make sense.
     // hence, mode is set to r only.
     CassandraFile file = new CassandraFile(Util.getCassandraPath(directory), name, IOContext.DEFAULT, true, keyspace, columnFamily, this.blockSize);
@@ -348,12 +362,19 @@ public abstract class CassandraDirectory extends BaseDirectory {
   @Override
   public void sync(Collection<String> names) throws IOException {
     ensureOpen();
-    Set<String> toSync = new HashSet<String>(names);
+    Set<String> toSync = new HashSet<>(names);
     toSync.retainAll(staleFiles);
 
-    for (String name : toSync)
+    for (String name : toSync) {
       fsync(name);
-
+    }
+    
+    // fsync the directory itsself, but only if there was any file fsynced before
+    // (otherwise it can happen that the directory does not yet exist)!
+    if (!toSync.isEmpty()) {
+      IOUtils.fsync(directory, true);
+    }
+    
     staleFiles.removeAll(toSync);
   }
 
@@ -391,7 +412,7 @@ public abstract class CassandraDirectory extends BaseDirectory {
   /** For debug output. */
   @Override
   public String toString() {
-    return this.getClass().getName() + "@" + directory + " lockFactory=" + getLockFactory();
+    return this.getClass().getSimpleName() + "@" + directory + " lockFactory=" + getLockFactory();
   }
 
   /**
@@ -415,63 +436,6 @@ public abstract class CassandraDirectory extends BaseDirectory {
   public final int getReadChunkSize() {
       logger.trace("getReadChunkSize {} ", chunkSize);
     return chunkSize;
-  }
-
-  /** Base class for reading input from a RandomAccessFile */
-  protected abstract static class FSIndexInput extends BufferedIndexInput {
-    /** the underlying RandomAccessFile */
-    protected final CassandraRandomAccessFile file;
-    boolean isClone = false;
-    /** start offset: non-zero in the slice case */
-    protected final long off;
-    /** end offset (start+length) */
-    protected final long end;
-    
-    /** Create a new FSIndexInput, reading the entire file from <code>path</code> */
-    protected FSIndexInput(String resourceDesc, CassandraFile path, IOContext context) throws IOException {
-      super(resourceDesc, context);
-      //this.file = new CassandraRandomAccessFile(path, "r");
-      this.file = new CassandraRandomAccessFile(path, context, true, path.getKeyspace(), path.getColumnFamily(), path.getBlockSize());
-      this.off = 0L;
-      this.end = file.length();
-      logger.trace("FSIndexInput init off {} end {} ", off, end);
-    }
-    
-    /** Create a new FSIndexInput, representing a slice of an existing open <code>file</code> */
-    protected FSIndexInput(String resourceDesc, CassandraRandomAccessFile file, long off, long length, int bufferSize) {
-      super(resourceDesc, bufferSize);
-      this.file = file;
-      this.off = off;
-      this.end = off + length;
-      this.isClone = true; // well, we are sorta?
-    }
-    
-    @Override
-    public void close() throws IOException {
-      // only close the file if this is not a clone
-      if (!isClone) {
-        file.close();
-      }
-    }
-    
-    @Override
-    public FSIndexInput clone() {
-      FSIndexInput clone = (FSIndexInput)super.clone();
-      clone.isClone = true;
-      return clone;
-    }
-    
-    @Override
-    public final long length() {
-      return end - off;
-    }
-    
-    /** Method used for testing. Returns true if the underlying
-     *  file descriptor is valid.
-     */
-    //boolean isFDValid() throws IOException {
-    //  return file.getFDvalid();
-    //}
   }
   
     /**
@@ -501,8 +465,6 @@ public abstract class CassandraDirectory extends BaseDirectory {
             logger.trace("initializing FSIndexOutput name {}", name);
             this.parent = parent;
             this.name = name;
-            //file = new CassandraRandomAccessFile(new CassandraFile(parent.directory, name), "rw");
-            // file = new CassandraRandomAccessFile(new CassandraFile(parent.directory, name, "rw", true, "lucene0", "index0"), "rw");
             file = new CassandraRandomAccessFile(new CassandraFile(Util.getCassandraPath(parent.directory), name, parent.mode, true, parent.keyspace, parent.columnFamily, parent.blockSize), parent.mode, true, parent.keyspace, parent.columnFamily, parent.blockSize);
             isOpen = true;
         }
@@ -562,38 +524,7 @@ public abstract class CassandraDirectory extends BaseDirectory {
 
     protected void fsync(String name) throws IOException {
         logger.trace("fsync {}", name);
-        //CassandraFile fullFile = new CassandraFile(directory, name);
         CassandraFile fullFile = new CassandraFile(Util.getCassandraPath(directory), name, mode, true, keyspace, columnFamily, blockSize);
-        boolean success = false;
-        int retryCount = 0;
-        IOException exc = null;
-        while (!success && retryCount < 5) {
-            retryCount++;
-            CassandraRandomAccessFile file = null;
-            try {
-                try {
-                    //file = new CassandraRandomAccessFile(fullFile, "rw");
-                    file = new CassandraRandomAccessFile(fullFile, mode, true, this.keyspace, this.columnFamily, this.blockSize);
-                    // public CassandraRandomAccessFile(CassandraFile path, String mode, boolean frameMode, String keyspace, String columnFamily) {
-                    file.getFDsync();
-                    success = true;
-                } finally {
-                    if (file != null)
-                        file.close();
-                }
-            } catch (IOException ioe) {
-                if (exc == null)
-                    exc = ioe;
-                try {
-                    // Pause 5 msec
-                    Thread.sleep(5);
-                } catch (InterruptedException ie) {
-                    throw new ThreadInterruptedException(ie);
-                }
-            }
-        }
-        if (!success)
-            // Throw original exception
-            throw exc;
+        IOUtils.fsync(fullFile, false);
     }
 }
