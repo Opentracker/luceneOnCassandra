@@ -368,4 +368,10 @@ public class HadoopFile implements File, Serializable {
         return null;
     }
 
+    @Override
+    public java.nio.file.Path toPath() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }
