@@ -34,5 +34,10 @@ public abstract class CassandraFSLockFactory extends LockFactory {
        logger.trace("called getLockDir ");
       return lockDir;
     }
+    
+    @Override
+    public String toString() {
+      return this.getClass().getSimpleName() + "@" + lockDir;
+    }
 
 }
