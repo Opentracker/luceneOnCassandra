@@ -4,6 +4,7 @@ import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -915,6 +916,12 @@ public class ACassandraFile implements File, Closeable, MonitorType {
     @Override
     public String getMonitorName() {
         return getClass().getName();
+    }
+
+    @Override
+    public Path toPath() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }
