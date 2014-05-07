@@ -89,9 +89,11 @@ public class TestCassandraDirectory extends  OpentrackerTestBase {
 
     @Test
     public void testFileModified() {
+        /* fileModified exist in lucene 4.6.0 but removed in lucene 4.8.0
         CassandraFile file = new CassandraFile("/test/", "testFile", IOContext.READ, true, keyspace, columnFamily, blockSize);
         long fileModified = cassandraDirectory.fileModified(file, "testFile");
         assertTrue(fileModified > 0);
+        */
     }
 
     @Test
