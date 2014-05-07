@@ -3,6 +3,7 @@ package org.apache.lucene.cassandra;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -673,6 +674,11 @@ public class CassandraFile implements Closeable, MonitorType {
     @Override
     public String getMonitorName() {
         return getClass().getName();
+    }
+
+    public Path toPath() {
+        // TODO Auto-generated method stub
+        return null;
     }    
 
 }
