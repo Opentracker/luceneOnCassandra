@@ -1,8 +1,27 @@
 package org.apache.lucene.cassandra;
 
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
 import java.io.EOFException;
 import java.io.IOException;
 
+import org.apache.lucene.cassandra.SimpleFSDirectory.SimpleFSIndexInput;
 import org.apache.lucene.store.BufferedIndexInput;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
@@ -10,6 +29,13 @@ import org.apache.lucene.store.LockFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+/** A straightforward implementation of {@link CassandraDirectory}
+ *  using java.io.RandomAccessFile.  However, this class has
+ *  poor concurrent performance (multiple threads will
+ *  bottleneck) as it synchronizes when multiple threads
+ *  read from the same file.  It's usually better to use
+ *  {@link NIOFSDirectory} or {@link MMapDirectory} instead. */
 public class SimpleCassandraDirectory extends CassandraDirectory {
 
     private static Logger logger = LoggerFactory.getLogger(SimpleCassandraDirectory.class);
@@ -75,20 +101,54 @@ public class SimpleCassandraDirectory extends CassandraDirectory {
      * Reads bytes with {@link RandomAccessFile#seek(long)} followed by
      * {@link RandomAccessFile#read(byte[], int, int)}.  
      */
-    protected static class CassandraSimpleFSIndexInput extends FSIndexInput {
+    protected static class CassandraSimpleFSIndexInput extends BufferedIndexInput {
       /**
        * The maximum chunk size is 8192 bytes, because {@link RandomAccessFile} mallocs
        * a native buffer outside of stack if the read buffer size is larger.
        */
       private static final int CHUNK_SIZE = 8192;
+      
+      /** the file channel we will read from */
+      protected final CassandraRandomAccessFile file;
+      /** is this instance a clone and hence does not own the file to close it */
+      boolean isClone = false;
+      /** start offset: non-zero in the slice case */
+      protected final long off;
+      /** end offset (start+length) */
+      protected final long end;
     
       public CassandraSimpleFSIndexInput(String resourceDesc, CassandraFile path, IOContext context) throws IOException {
-        super(resourceDesc, path, context);
-        logger.trace("init {} context {}", resourceDesc, context);
+          super(resourceDesc, context);
+          this.file = new CassandraRandomAccessFile(path, path.getMode(), true, path.getKeyspace(), path.getColumnFamily(), path.getBlockSize());
+          this.off = 0L;
+          this.end = file.length();
       }
       
       public CassandraSimpleFSIndexInput(String resourceDesc, CassandraRandomAccessFile file, long off, long length, int bufferSize) {
-        super(resourceDesc, file, off, length, bufferSize);
+          super(resourceDesc, bufferSize);
+          this.file = file;
+          this.off = off;
+          this.end = off + length;
+          this.isClone = true;
+      }
+      
+      @Override
+      public void close() throws IOException {
+        if (!isClone) {
+          file.close();
+        }
+      }
+      
+      @Override
+      public SimpleFSIndexInput clone() {
+        SimpleFSIndexInput clone = (SimpleFSIndexInput)super.clone();
+        clone.isClone = true;
+        return clone;
+      }
+      
+      @Override
+      public final long length() {
+        return end - off;
       }
     
       /** IndexInput methods */
