@@ -21,6 +21,7 @@ package org.apache.lucene.cassandra;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Path;
 import java.util.Arrays;
 
 import org.apache.lucene.store.CassandraDirectory;
@@ -211,6 +212,11 @@ public class FSFile implements File, Serializable {
             String permissions) throws FileNotFoundException {
         // TODO Auto-generated method stub
         return new FSRandomAccessFile(fullFile, permissions);
+    }
+
+    @Override
+    public Path toPath() {
+        return thePrivateFile.toPath();
     }
 
     // @Override
