@@ -20,20 +20,6 @@ package org.apache.lucene.cassandra;
 import org.apache.lucene.store.LockFactory;
 
 
-/*
-
- [nejoom:~/Documents/workspace/luceneOnCassandra/src/main/java/org/apache/lucene/cassandra]$ diff FSLockFactory.orig FSLockFactory.java 
-1c1
-< package org.apache.lucene.store;
----
-> package org.apache.lucene.cassandra;
-20c20
-< import java.io.File;
----
-> import org.apache.lucene.store.LockFactory;
-
- */
-
 /**
  * Base class for file system based locking implementation.
  */
