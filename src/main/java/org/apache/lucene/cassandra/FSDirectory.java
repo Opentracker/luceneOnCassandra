@@ -17,7 +17,8 @@ package org.apache.lucene.cassandra;
  * limitations under the License.
  */
 
-import static java.util.Collections.synchronizedSet;
+
+import org.apache.lucene.util.Constants;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -34,85 +35,16 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.LockFactory;
+import org.apache.lucene.store.NativeFSLockFactory;
 import org.apache.lucene.store.NoSuchDirectoryException;
+
 import org.apache.lucene.util.ThreadInterruptedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.util.Collections.synchronizedSet;
 
 
-/*
- * 
- * [nejoom:~/Documents/workspace/luceneOnCassandra/src/main/java/org/apache/lucene/cassandra]$ diff FSDirectory.java FSDirectory.orig
-1c1
-< package org.apache.lucene.cassandra;
----
-> package org.apache.lucene.store;
-20,21c20
-< import static java.util.Collections.synchronizedSet;
-< 
----
-> import java.io.File;
-22a22
-> import java.io.FilenameFilter;
-23a24,25
-> import java.io.RandomAccessFile;
-> 
-24a27
-> import static java.util.Collections.synchronizedSet;
-29,38d31
-< import org.apache.lucene.store.BaseDirectory;
-< import org.apache.lucene.store.BufferedIndexInput;
-< import org.apache.lucene.store.BufferedIndexOutput;
-< import org.apache.lucene.store.Directory;
-< import org.apache.lucene.store.IOContext;
-< import org.apache.lucene.store.IndexInput;
-< import org.apache.lucene.store.IndexOutput;
-< import org.apache.lucene.store.LockFactory;
-< //import org.apache.lucene.store.LockFactory;
-< import org.apache.lucene.store.NoSuchDirectoryException;
-39a33,34
-> import org.apache.lucene.util.Constants;
-> import org.apache.lucene.util.IOUtils;
-146c141
-<       lockFactory = new SimpleFSLockFactory();
----
->       lockFactory = new NativeFSLockFactory();
-183a179,182
->     if ((Constants.WINDOWS || Constants.SUN_OS || Constants.LINUX)
->           && Constants.JRE_IS_64BIT && MMapDirectory.UNMAP_SUPPORTED) {
->       return new MMapDirectory(path, lockFactory);
->     } else if (Constants.WINDOWS) {
-184a184,186
->     } else {
->       return new NIOFSDirectory(path, lockFactory);
->     }
-193,194c195,196
-<     if (lockFactory instanceof SimpleFSLockFactory) {
-<       final SimpleFSLockFactory lf = (SimpleFSLockFactory) lockFactory;
----
->     if (lockFactory instanceof FSLockFactory) {
->       final FSLockFactory lf = (FSLockFactory) lockFactory;
-222c224
-<     String[] result = dir.list(new java.io.FilenameFilter() {
----
->     String[] result = dir.list(new FilenameFilter() {
-224,225c226,227
-<         public boolean accept(java.io.File dir, String file) {
-<             return !new java.io.File(dir, file).isDirectory();
----
->         public boolean accept(File dir, String file) {
->           return !new File(dir, file).isDirectory();
-424c426
-<       return file.getFDvalid();
----
->       return file.getFD().valid();
-509c511
-<           file.getFDsync();
----
->           file.getFD().sync();
-
- */
 /**
  * Base class for Directory implementations that store index
  * files in the file system.  
@@ -220,7 +152,7 @@ public abstract class FSDirectory extends BaseDirectory {
   protected FSDirectory(File path, LockFactory lockFactory) throws IOException {
     // new ctors use always NativeFSLockFactory as default:
     if (lockFactory == null) {
-      lockFactory = new SimpleFSLockFactory();
+      lockFactory = new NativeFSLockFactory();
     }
     logger.trace("getting canonical path {}", path.getCanonicalPath());
     directory = getCanonicalPath(path);
@@ -259,6 +191,18 @@ public abstract class FSDirectory extends BaseDirectory {
   /** Just like {@link #open(File)}, but allows you to
    *  also specify a custom {@link LockFactory}. */
   public static FSDirectory open(File path, LockFactory lockFactory) throws IOException {
+      // TODO, below is commented because too much work at this time, to make it compile
+      // successfully, but the goal is to make it as similar as possible to lucene 4.8.0
+      /*
+    if ((Constants.WINDOWS || Constants.SUN_OS || Constants.LINUX)
+             && Constants.JRE_IS_64BIT && MMapDirectory.UNMAP_SUPPORTED) {
+      return new MMapDirectory(path, lockFactory);
+    } else if (Constants.WINDOWS) {
+      return new SimpleFSDirectory(path, lockFactory);
+    } else {
+      return new NIOFSDirectory(path, lockFactory);
+    }
+    */
       return new SimpleFSDirectory(path, lockFactory);
   }
 
@@ -268,8 +212,8 @@ public abstract class FSDirectory extends BaseDirectory {
 
     // for filesystem based LockFactory, delete the lockPrefix, if the locks are placed
     // in index dir. If no index dir is given, set ourselves
-    if (lockFactory instanceof SimpleFSLockFactory) {
-      final SimpleFSLockFactory lf = (SimpleFSLockFactory) lockFactory;
+    if (lockFactory instanceof FSLockFactory) {
+      final FSLockFactory lf = (FSLockFactory) lockFactory;
       final File dir = lf.getLockDir();
       // if the lock factory has no lockDir set, use the this directory as lockDir
       if (dir == null) {
@@ -336,13 +280,6 @@ public abstract class FSDirectory extends BaseDirectory {
     return file.exists();
   }
 
-  /** Returns the time the named file was last modified. */
-  public static long fileModified(File directory, String name) {
-      logger.info("fileModified {}", name);
-    File file = directory.get(directory, name);// new File(directory, name);
-    return file.lastModified();
-  }
-
   /** Returns the length in bytes of a file in the directory. */
   @Override
   public long fileLength(String name) throws IOException {
@@ -385,22 +322,29 @@ public abstract class FSDirectory extends BaseDirectory {
 
     File file = directory.get(directory, name);// new File(directory, name);
     if (file.exists() && !file.delete())          // delete existing, if any
-      throw new IOException("Cannot overwrite: " + name);
+      throw new IOException("Cannot overwrite: " + file);
   }
 
   protected void onIndexOutputClosed(FSIndexOutput io) {
-      logger.info("onIndexOutputClosed ");
+    logger.info("onIndexOutputClosed ");
     staleFiles.add(io.name);
   }
 
   @Override
   public void sync(Collection<String> names) throws IOException {
     ensureOpen();
-    Set<String> toSync = new HashSet<String>(names);
+    Set<String> toSync = new HashSet<>(names);
     toSync.retainAll(staleFiles);
 
-    for (String name : toSync)
+    for (String name : toSync) {
       fsync(name);
+    }
+    
+    // fsync the directory itsself, but only if there was any file fsynced before
+    // (otherwise it can happen that the directory does not yet exist)!
+    if (!toSync.isEmpty()) {
+      IOUtils.fsync(directory, true);
+    }
 
     staleFiles.removeAll(toSync);
   }
@@ -439,7 +383,7 @@ public abstract class FSDirectory extends BaseDirectory {
   /** For debug output. */
   @Override
   public String toString() {
-    return this.getClass().getName() + "@" + directory + " lockFactory=" + getLockFactory();
+    return this.getClass().getSimpleName() + "@" + directory + " lockFactory=" + getLockFactory();
   }
 
   /**
@@ -463,64 +407,6 @@ public abstract class FSDirectory extends BaseDirectory {
   public final int getReadChunkSize() {
       logger.info("getReadChunkSize {} ", chunkSize);
     return chunkSize;
-  }
-
-  /** Base class for reading input from a RandomAccessFile */
-  protected abstract static class FSIndexInput extends BufferedIndexInput {
-    /** the underlying RandomAccessFile */
-    protected final RandomAccessFile file;
-    boolean isClone = false;
-    /** start offset: non-zero in the slice case */
-    protected final long off;
-    /** end offset (start+length) */
-    protected final long end;
-    
-    /** Create a new FSIndexInput, reading the entire file from <code>path</code> */
-    protected FSIndexInput(String resourceDesc, File path, IOContext context) throws IOException {
-      super(resourceDesc, context);
-//    this.file = new RandomAccessFile(path, "r"); 
-//      logger.error("path: " + path.getCanonicalPath());
-      this.file = path.getRandomAccessFile(path, "r");
-      this.off = 0L;
-//      logger.error("Constructor RandomAccessFile: " + path.getCanonicalPath());
-      this.end = file.length();
-    }
-    
-    /** Create a new FSIndexInput, representing a slice of an existing open <code>file</code> */
-    protected FSIndexInput(String resourceDesc, RandomAccessFile file, long off, long length, int bufferSize) {
-      super(resourceDesc, bufferSize);
-      this.file = file;
-      this.off = off;
-      this.end = off + length;
-      this.isClone = true; // well, we are sorta?
-    }
-    
-    @Override
-    public void close() throws IOException {
-      // only close the file if this is not a clone
-      if (!isClone) {
-        file.close();
-      }
-    }
-    
-    @Override
-    public FSIndexInput clone() {
-      FSIndexInput clone = (FSIndexInput)super.clone();
-      clone.isClone = true;
-      return clone;
-    }
-    
-    @Override
-    public final long length() {
-      return end - off;
-    }
-    
-    /** Method used for testing. Returns true if the underlying
-     *  file descriptor is valid.
-     */
-    boolean isFDValid() throws IOException {
-      return file.getFDvalid();
-    }
   }
   
   /**
@@ -602,36 +488,7 @@ public abstract class FSDirectory extends BaseDirectory {
 
   protected void fsync(String name) throws IOException {
       logger.info("fsync {}", name);
-    File fullFile = directory.get(directory, name);// new File(directory, name);
-    boolean success = false;
-    int retryCount = 0;
-    IOException exc = null;
-    while (!success && retryCount < 5) {
-      retryCount++;
-      RandomAccessFile file = null;
-      try {
-        try {
-          file = fullFile.getRandomAccessFile(fullFile, "rw");
-//          file = new RandomAccessFile(fullFile, "rw");
-          file.getFDsync();
-          success = true;
-        } finally {
-          if (file != null)
-            file.close();
-        }
-      } catch (IOException ioe) {
-        if (exc == null)
-          exc = ioe;
-        try {
-          // Pause 5 msec
-          Thread.sleep(5);
-        } catch (InterruptedException ie) {
-          throw new ThreadInterruptedException(ie);
-        }
-      }
-    }
-    if (!success)
-      // Throw original exception
-      throw exc;
+      File fullFile = directory.get(directory, name);
+      IOUtils.fsync(fullFile, false);
   }
 }
