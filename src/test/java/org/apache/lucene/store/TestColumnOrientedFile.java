@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import net.opentracker.test.OpentrackerTestBase;
+
 import org.apache.lucene.cassandra.BlockMap;
 import org.apache.lucene.cassandra.CassandraClient;
 import org.apache.lucene.cassandra.ColumnOrientedFile;
@@ -19,11 +21,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class TestColumnOrientedFile {
+public class TestColumnOrientedFile extends OpentrackerTestBase {
     
     CassandraClient client = null;
     ColumnOrientedFile cof = null;
-    int blocksize = 16384; 
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -46,7 +47,7 @@ public class TestColumnOrientedFile {
     public void testColumnOrientedFile() {
 
         try {
-            client = new CassandraClient("localhost", 9160, true, "lucene1", "index1", blocksize);
+            client = new CassandraClient(cassandraHost, rpcPort, frameMode, keyspace, columnFamily, blockSize);
             cof = new ColumnOrientedFile(client);
         } catch (IOException e) {
             fail("exception is not expected");
@@ -65,14 +66,14 @@ public class TestColumnOrientedFile {
         
         FileBlock existingBlock = new FileBlock();
         existingBlock.setDataLength("123".length());
-        existingBlock.setBlockSize(blocksize);
+        existingBlock.setBlockSize(blockSize);
         existingBlock.setDataOffset(0);
         existingBlock.setBlockNumber(0);
         existingBlock.setBlockName("BLOCK-0");
         
         FileBlock preFragment = (FileBlock) existingBlock.clone();
         
-        FileDescriptor fileDescriptor = new FileDescriptor("testsegments.gen", blocksize);
+        FileDescriptor fileDescriptor = new FileDescriptor("testsegments.gen", blockSize);
         fileDescriptor.setLastAccessed(System.currentTimeMillis());
         fileDescriptor.setLastModified(System.currentTimeMillis());
         fileDescriptor.setLength("123".length());
@@ -97,7 +98,7 @@ public class TestColumnOrientedFile {
         Set<byte[]> blockNames = new HashSet<byte[]>();
         byte[] column0 = "BLOCK-0".getBytes();
         blockNames.add(column0);
-        FileDescriptor fileDescriptor = new FileDescriptor("testsegments.gen", blocksize);
+        FileDescriptor fileDescriptor = new FileDescriptor("testsegments.gen", blockSize);
         
         BlockMap bm;
         try {
