@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 
+import net.opentracker.test.OpentrackerTestBase;
+
 import org.apache.lucene.cassandra.CassandraClient;
 import org.apache.lucene.cassandra.ColumnOrientedDirectory;
 import org.apache.lucene.cassandra.FileDescriptor;
@@ -13,11 +15,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class TestColumnOrientedDirectory {
+public class TestColumnOrientedDirectory extends OpentrackerTestBase {
 
     CassandraClient client = null;
-    ColumnOrientedDirectoryTestable cod = null;
-    int blocksize = 16384; 
+    ColumnOrientedDirectoryTestable cod = null; 
     
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -40,7 +41,7 @@ public class TestColumnOrientedDirectory {
     public void testColumnOrientedDirectory() {
 
         try {
-            client = new CassandraClient("localhost", 9160, true, "lucene1", "index1", blocksize);
+            client = new CassandraClient(cassandraHost, rpcPort, frameMode, keyspace, columnFamily, blockSize);
             cod = new ColumnOrientedDirectoryTestable(client);
         } catch (IOException e) {
             fail("exception is not expected");
@@ -53,7 +54,7 @@ public class TestColumnOrientedDirectory {
     
     @Test
     public void testSetFileDescriptor() {
-        FileDescriptor fd = new FileDescriptor("tests.gen", blocksize);
+        FileDescriptor fd = new FileDescriptor("tests.gen", blockSize);
         fd.setDeleted(false);
         try {
             cod.setFileDescriptor(fd);
@@ -105,7 +106,7 @@ public class TestColumnOrientedDirectory {
     class ColumnOrientedDirectoryTestable extends ColumnOrientedDirectory {
 
         public ColumnOrientedDirectoryTestable(CassandraClient cassandraClient) {
-            super(cassandraClient, blocksize);
+            super(cassandraClient, blockSize);
         }
 
         /* Cannot test ColumnOrientedDirectory getFileDescriptor because method
