@@ -21,7 +21,7 @@ public class TestCassandraDirectory extends  OpentrackerTestBase {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         try {
-            client = new CassandraClient("localhost", rpcPort, frameMode, keyspace, columnFamily, blockSize);
+            client = new CassandraClient(cassandraHost, rpcPort, frameMode, keyspace, columnFamily, blockSize);
         } catch (IOException e) {
             fail("exception is not expected");
         }
@@ -37,17 +37,25 @@ public class TestCassandraDirectory extends  OpentrackerTestBase {
 
     @Before
     public void setUp() throws Exception {
+        CassandraFile file  = null;
         try {
-            CassandraFile file = new CassandraFile("/test/", "testFile", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
+            file = new CassandraFile("/test/", "testFile", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
+            byte[] data = "hello world".getBytes();
+            file.write(data, 0, data.length);
             cassandraDirectory = CassandraDirectory.open(file, IOContext.DEFAULT, null, keyspace, columnFamily, blockSize, bufferSize);
         } catch (IOException e) {
             e.printStackTrace();
             fail("fail not expected");
+        } finally {
+            if (file != null) {
+                file.close();
+            }
         }
     }
 
     @After
     public void tearDown() throws Exception {
+        cassandraDirectory.close();
     }
     
     @Test
@@ -57,7 +65,6 @@ public class TestCassandraDirectory extends  OpentrackerTestBase {
 
     @Test
     public void testClose() {
-        
     }
 
     @Test
@@ -74,7 +81,9 @@ public class TestCassandraDirectory extends  OpentrackerTestBase {
     @Test
     public void testListAll() {
         try {
-            cassandraDirectory.listAll();
+            String[] files = cassandraDirectory.listAll();
+            assertEquals(1, files.length);
+            assertEquals("/test/testFile", files[0]);
         } catch (IOException e) {
             e.printStackTrace();
             fail("fail not expected");
@@ -98,7 +107,13 @@ public class TestCassandraDirectory extends  OpentrackerTestBase {
 
     @Test
     public void testFileLength() {
-        // TODO still need to implement this.
+        try {
+            long length = cassandraDirectory.fileLength("testFile");
+            assertEquals(22l, length);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail("fail not expected");
+        }
     }
     
     @Test
