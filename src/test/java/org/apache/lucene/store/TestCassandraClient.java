@@ -11,7 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeSet;
+
+import net.opentracker.test.OpentrackerTestBase;
 
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.lucene.cassandra.CassandraClient;
@@ -21,7 +22,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class TestCassandraClient {
+public class TestCassandraClient extends OpentrackerTestBase {
     
     private CassandraClient cc = null;
 
@@ -36,7 +37,7 @@ public class TestCassandraClient {
     @Before
     public void setUp() throws Exception {
         try {
-            cc = new CassandraClient("localhost", 9160, true, "lucene1", "index1", 16384);
+            cc = new CassandraClient(cassandraHost, rpcPort, frameMode, keyspace, columnFamily, blockSize);
         } catch (IOException e) {
             e.printStackTrace();
             fail("exception is not expected.");
@@ -45,6 +46,7 @@ public class TestCassandraClient {
 
     @After
     public void tearDown() throws Exception {
+        cc.close();
     }
 
     @Test
