@@ -1,8 +1,5 @@
 package org.apache.lucene.store;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
 import java.io.IOException;
 
 import org.apache.lucene.cassandra.CassandraClient;
@@ -13,6 +10,7 @@ import org.junit.BeforeClass;
 
 import junit.framework.TestCase;
 
+@Deprecated
 public class TestWriteRead extends TestCase {
 
     CassandraDirectory cassandraDirectory;
