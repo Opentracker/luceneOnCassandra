@@ -21,7 +21,6 @@ package org.apache.lucene.cassandra;
 import java.io.EOFException;
 import java.io.IOException;
 
-import org.apache.lucene.cassandra.SimpleFSDirectory.SimpleFSIndexInput;
 import org.apache.lucene.store.BufferedIndexInput;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
@@ -140,8 +139,8 @@ public class SimpleCassandraDirectory extends CassandraDirectory {
       }
       
       @Override
-      public SimpleFSIndexInput clone() {
-        SimpleFSIndexInput clone = (SimpleFSIndexInput)super.clone();
+      public CassandraSimpleFSIndexInput clone() {
+        CassandraSimpleFSIndexInput clone = (CassandraSimpleFSIndexInput)super.clone();
         clone.isClone = true;
         return clone;
       }
