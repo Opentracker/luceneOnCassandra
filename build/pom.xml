@@ -21,7 +21,7 @@
    </parent>
    <groupId>org.apache.lucene.store</groupId>
    <artifactId>luceneOnCassandra-module</artifactId>
-   <version>0.0.1-SNAPSHOT</version>
+   <version>0.0.2-SNAPSHOT</version>
    <name>Lucene on Cassandra</name>
    <description>Store lucene indices on cassandra</description>
 
@@ -154,7 +154,7 @@
    </build>
 
    <dependencies>
-      <!-- tomcat 6.0.29 use in our enviornment has servlet spec 2.5 -->
+      <!-- tomcat 6.0.29 use in our environment has servlet spec 2.5 -->
       <dependency>
          <groupId>javax.servlet</groupId>
          <artifactId>servlet-api</artifactId>
@@ -182,19 +182,19 @@
       <dependency>
          <groupId>org.apache.lucene</groupId>
          <artifactId>lucene-core</artifactId>
-         <version>4.6.0</version>
+         <version>4.8.0</version>
       </dependency>
 
       <dependency>
          <groupId>org.apache.lucene</groupId>
          <artifactId>lucene-queryparser</artifactId>
-         <version>4.6.0</version>
+         <version>4.8.0</version>
       </dependency>
 
       <dependency>
          <groupId>org.apache.lucene</groupId>
          <artifactId>lucene-analyzers-common</artifactId>
-         <version>4.6.0</version>
+         <version>4.8.0</version>
       </dependency>
 
       <dependency>
