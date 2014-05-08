@@ -29,9 +29,10 @@ import org.apache.lucene.index.MergePolicy;
 import org.apache.lucene.index.NoMergePolicy;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TieredMergePolicy;
-import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.leadboxer.util.LuceneSettings;
 
 import proj.zoie.api.impl.ZoieMergePolicy;
 
@@ -206,9 +207,10 @@ public class IndexFiles {
 
             dir.createOutput(indexPath, IOContext.DEFAULT);
             dir.openInput(indexPath, IOContext.DEFAULT);
-            Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_46);
+            Analyzer analyzer = new StandardAnalyzer(LuceneSettings.currentVersion);
+
             IndexWriterConfig iwc =
-                    new IndexWriterConfig(Version.LUCENE_46, analyzer);
+                    new IndexWriterConfig(LuceneSettings.currentVersion, analyzer);
             logger.info("merge policy = {}", iwc.getMergePolicy().getClass()
                     .getName());
             logger.info("merge scheduler = {} ", iwc.getMergeScheduler()
