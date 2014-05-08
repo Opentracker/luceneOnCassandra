@@ -23,7 +23,7 @@ public class TestSimpleCassandraDirectory extends OpentrackerTestBase {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         try {
-            client = new CassandraClient("localhost", rpcPort, frameMode, keyspace, columnFamily, blockSize);
+            client = new CassandraClient(cassandraHost, rpcPort, frameMode, keyspace, columnFamily, blockSize);
         } catch (IOException e) {
             fail("exception is not expected");
         }
