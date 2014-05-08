@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.opentracker.test.OpentrackerTestBase;
+
 import org.apache.lucene.cassandra.CassandraClient;
 import org.apache.lucene.cassandra.ColumnOrientedDirectory;
 import org.junit.After;
@@ -17,10 +19,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class TestIndexingSearching {
+public class TestIndexingSearching extends OpentrackerTestBase {
     
     CassandraClient client = null;
-    int blockSize = 16384; 
     static String testFilePath = "test";
 
     @BeforeClass
@@ -38,18 +39,18 @@ public class TestIndexingSearching {
     public void setUp() throws Exception {
         
         try {
-            client = new CassandraClient("localhost", 9160, true, "lucene1", "index1", blockSize);
+            client = new CassandraClient(cassandraHost, rpcPort, frameMode, keyspace, columnFamily, blockSize);
         } catch (IOException e) {
             fail("exception is not expected");
         }
         
         assertNotNull(client);
-        client.truncate("index1");
+        client.truncate(columnFamily);
     }
 
     @After
     public void tearDown() throws Exception {
-        client.truncate("index1");
+        client.truncate(columnFamily);
     }
 
     @Test
@@ -61,7 +62,7 @@ public class TestIndexingSearching {
              * search and the result should be same.
              *  
              */
-            String[] args = {"-cfs", "-docs", testFilePath,  "-index", "index1", "-keyspace", "lucene1", "-column-family", "index1"};
+            String[] args = {"-cfs", "-docs", testFilePath,  "-index", "index1", "-keyspace", keyspace, "-column-family", columnFamily};
             
             IndexFiles.main(args);        
             IndexFiles.main(args);
@@ -99,10 +100,11 @@ public class TestIndexingSearching {
              * index again on the directory but include the term.
              * find the term which is now available. 
              */
-            String[] args = {"-update", "-docs", testFilePath, "-index", "index1", "-keyspace", "lucene1", "-column-family", "index1"};
+            String[] args = {"-update", "-docs", testFilePath, "-index", "index1", "-keyspace", keyspace, "-column-family", columnFamily};
             IndexFiles.main(args);
-            Search search = new Search("lucene1", "index1", 16384, "index1");
+            Search search = new Search(keyspace, columnFamily, blockSize, "index1");
             int total = search.searchOn("apple");
+            assertNotNull(search);
             search.close();
             
             assertEquals(0, total);
@@ -115,7 +117,7 @@ public class TestIndexingSearching {
             bufferWritter.close();
             
             IndexFiles.main(args);
-            search = new Search("lucene1", "index1", 16384, "index1");
+            search = new Search(keyspace, columnFamily, blockSize, "index1");
             total = search.searchOn("apple");
             search.close();
             
@@ -145,7 +147,7 @@ public class TestIndexingSearching {
              * index again on the directory but include the term.
              * find the term which is now available. 
              */
-            String[] args = {"-update", "-merge", "-docs", testFilePath, "-index", "index1", "-keyspace", "lucene1", "-column-family", "index1"};
+            String[] args = {"-update", "-merge", "-docs", testFilePath, "-index", "index1", "-keyspace", keyspace, "-column-family", columnFamily};
             IndexFiles.main(args);
 
         } catch (Exception e) {
