@@ -4,6 +4,7 @@ public class OpentrackerTestBase {
     
     protected static String keyspace = "lucene1";
     protected static String columnFamily = "index1";
+    protected static String cassandraHost = "localhost";
     protected static int blockSize = 16384;
     protected static int bufferSize = 16384;
     protected static int rpcPort = 9160;
