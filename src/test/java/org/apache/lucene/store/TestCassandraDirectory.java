@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
 
+@Deprecated
 public class TestCassandraDirectory extends TestCase {
 
     CassandraDirectory cassandraDirectory;
