@@ -156,7 +156,9 @@ public abstract class CassandraDirectory extends BaseDirectory {
   protected CassandraDirectory(CassandraFile path, IOContext mode, LockFactory lockFactory, String keyspace, String columnFamily, int blockSize, int bufferSize) throws IOException {
     // new ctors use always NativeFSLockFactory as default:
     if (lockFactory == null) {
-      lockFactory = new CassandraNativeFSLockFactory(path, Util.getFileName(path), mode, true, keyspace, columnFamily, blockSize);
+      lockFactory = new CassandraSimpleFSLockFactory(path, Util.getFileName(path), mode, true, keyspace, columnFamily, blockSize);
+      // TODO this exist in lucene 4.8.0, make it work.
+      //lockFactory = new CassandraNativeFSLockFactory(path, Util.getFileName(path), mode, true, keyspace, columnFamily, blockSize);
     }
     this.keyspace = keyspace;
     this.columnFamily = columnFamily;
@@ -209,15 +211,16 @@ public abstract class CassandraDirectory extends BaseDirectory {
   
   public static CassandraDirectory open(CassandraFile path, IOContext mode, LockFactory lockFactory, String keyspace, String columnFamily, int blockSize, int bufferSize) throws IOException {
       logger.info("initializing CassandraDirectory path {} lockFactory {}", path.getName(), lockFactory);
+      /*
       if ((Constants.WINDOWS || Constants.SUN_OS || Constants.LINUX)
                    && Constants.JRE_IS_64BIT && MMapDirectory.UNMAP_SUPPORTED) {
-         //return new MMapDirectory(path, lockFactory);
+         return new MMapDirectory(path, lockFactory);
       } else if (Constants.WINDOWS) {
-         //return new SimpleFSDirectory(path, lockFactory);
+         return new SimpleFSDirectory(path, lockFactory);
       } else {
-         //return new NIOFSDirectory(path, lockFactory);
-         //return new SimpleCassandraDirectory(path, mode, lockFactory, keyspace, columnFamily, blockSize, bufferSize);
+         return new NIOFSDirectory(path, lockFactory);
       }
+      */
     return new SimpleCassandraDirectory(path, mode, lockFactory, keyspace, columnFamily, blockSize, bufferSize);
   }
 
@@ -259,7 +262,7 @@ public abstract class CassandraDirectory extends BaseDirectory {
         else if (!dir.isDirectory())
             throw new NoSuchDirectoryException("file '" + dir.getName() + "' exists but is not a directory");
 
-        // Exclude subdirs
+        // TODO Exclude subdirs
         /*
         String[] result = dir.list(new java.io.FilenameFilter() {
             @Override
