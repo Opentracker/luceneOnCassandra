@@ -14,11 +14,12 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.util.Version;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.leadboxer.util.LuceneSettings;
 
 // http://wiki.apache.org/lucene-java/ImproveSearchingSpeed
 public class Search {
@@ -33,7 +34,7 @@ public class Search {
 
     boolean raw = false;
 
-    public static boolean useCassandraStorage = false;
+    public static boolean useCassandraStorage = true;
 
     public static boolean useACassandra = true;
     
@@ -62,7 +63,7 @@ public class Search {
 
             reader = DirectoryReader.open(dir);
             searcher = new IndexSearcher(reader);
-            analyzer = new StandardAnalyzer(Version.LUCENE_46);
+            analyzer = new StandardAnalyzer(LuceneSettings.currentVersion);
 
         } catch (IOException e) {
             logger.error("ioexception encountered ", e);
@@ -76,7 +77,7 @@ public class Search {
 
         try {
             QueryParser parser =
-                    new QueryParser(Version.LUCENE_46, field, analyzer);
+                    new QueryParser(LuceneSettings.currentVersion, field, analyzer);
             
             Query  query = parser.parse(queries);
             
@@ -162,10 +163,10 @@ public class Search {
 
             reader = DirectoryReader.open(dir);
             IndexSearcher searcher = new IndexSearcher(reader);
-            Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_46);
+            Analyzer analyzer = new StandardAnalyzer(LuceneSettings.currentVersion);
 
             QueryParser parser =
-                    new QueryParser(Version.LUCENE_46, field, analyzer);
+                    new QueryParser(LuceneSettings.currentVersion, field, analyzer);
 
             BufferedReader in =
                     new BufferedReader(
