@@ -65,8 +65,7 @@ public class SimpleFSDirectory extends FSDirectory {
     ensureOpen();
     logger.info("openInput name {}", name);
     final File path = directory.get(directory, name);
-    //RandomAccessFile raf = new ACassandraRandomAccessFile(path, "r");
-    RandomAccessFile raf = (RandomAccessFile) path;
+    RandomAccessFile raf = directory.getRandomAccessFile(path, "r");
     return new SimpleFSIndexInput("SimpleFSIndexInput(path=\"" + path.getPath() + "\")", raf, context);
   }
 
