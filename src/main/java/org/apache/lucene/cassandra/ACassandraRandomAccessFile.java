@@ -42,6 +42,17 @@ public class ACassandraRandomAccessFile implements RandomAccessFile,
                         columnFamily, bufferSize);
     }
 
+    public ACassandraRandomAccessFile(File path, String mode) {
+        IOContext context = IOContext.DEFAULT;
+        if (mode.equals("r")) {
+            context = IOContext.READ;
+        }
+        file =
+                new ACassandraFile(Util.getCassandraPath(path),
+                        Util.getFileName(path), context, true, "lucene0",
+                        "index0", 16384);
+    }
+
     public long length() throws IOException {
         logger.trace("called length {} of this file {}", file.length(),
                 this.file.getName());
