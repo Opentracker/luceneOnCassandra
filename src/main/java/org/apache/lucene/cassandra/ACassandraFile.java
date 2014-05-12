@@ -4,9 +4,17 @@ import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.WatchEvent.Kind;
+import java.nio.file.WatchEvent.Modifier;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -23,7 +31,7 @@ import org.apache.monitor.OpentrackerClientMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ACassandraFile implements File, Closeable, MonitorType {
+public class ACassandraFile implements File, Closeable, MonitorType, Path {
 
     private String name = null;
 
@@ -62,6 +70,9 @@ public class ACassandraFile implements File, Closeable, MonitorType {
     public static int getDNCount = 0;
 
     public static long getDNTime = 0;
+    
+    private volatile transient Path filePath;
+    
     @Override
 
     public File get(File directory, String name) {
@@ -920,8 +931,177 @@ public class ACassandraFile implements File, Closeable, MonitorType {
 
     @Override
     public Path toPath() {
+        Path result = filePath;
+        if (result == null) {
+            synchronized (this) {
+                result = filePath;
+                if (result == null) {
+                    CassandraFileSystemProvider provider = new CassandraFileSystemProvider();
+                    CassandraFileSystem cfs = new CassandraFileSystem(provider, cassandraDirectory);
+                    result = cfs.getPath(getAbsolutePath());
+                    filePath = result;
+                }
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public FileSystem getFileSystem() {
+     // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean isAbsolute() {
+     // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Path getRoot() {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public Path getFileName() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Path getParent() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public int getNameCount() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public Path getName(int index) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Path subpath(int beginIndex, int endIndex) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean startsWith(Path other) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean startsWith(String other) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean endsWith(Path other) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean endsWith(String other) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Path normalize() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Path resolve(Path other) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Path resolve(String other) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Path resolveSibling(Path other) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Path resolveSibling(String other) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Path relativize(Path other) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public URI toUri() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Path toAbsolutePath() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Path toRealPath(LinkOption... options) throws IOException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public java.io.File toFile() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public WatchKey register(WatchService watcher, Kind<?>[] events,
+            Modifier... modifiers) throws IOException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public WatchKey register(WatchService watcher, Kind<?>... events)
+            throws IOException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Iterator<Path> iterator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public int compareTo(Path other) {
+        // TODO Auto-generated method stub
+        return 0;
     }
 
 }
