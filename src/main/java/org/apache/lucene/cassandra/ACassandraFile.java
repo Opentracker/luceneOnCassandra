@@ -39,7 +39,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
 
     private String columnFamily = null;
 
-    private String cassandraDirectory = null;
+    private String cassandraDirectory = "/";
 
     private IOContext mode = null;
 
@@ -72,6 +72,10 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
     public static long getDNTime = 0;
     
     private volatile transient Path filePath;
+    
+    private CassandraFileSystem fs;
+    
+    private CassandraFileSystemProvider provider = new CassandraFileSystemProvider();
     
     @Override
 
@@ -133,7 +137,8 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
                 "ACassandraFile String keyspace {}, String columnFamily {}",
                 keyspace, columnFamily);
         if (directory == null) {
-            this.name = name;
+            directory = cassandraDirectory;
+            this.name = directory + name;
         } else {
             this.name = directory + name;
         }
@@ -142,6 +147,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         this.keyspace = keyspace;
         this.columnFamily = columnFamily;
         this.cassandraDirectory = directory;
+        this.fs = new CassandraFileSystem(provider, cassandraDirectory);
         boolean readOnly = true;
         monitor = JmxMonitor.getInstance().getCassandraMonitor(this);
         try {
@@ -936,7 +942,6 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
             synchronized (this) {
                 result = filePath;
                 if (result == null) {
-                    CassandraFileSystemProvider provider = new CassandraFileSystemProvider();
                     CassandraFileSystem cfs = new CassandraFileSystem(provider, cassandraDirectory);
                     result = cfs.getPath(getAbsolutePath());
                     filePath = result;
@@ -948,8 +953,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
 
     @Override
     public FileSystem getFileSystem() {
-     // TODO Auto-generated method stub
-        return null;
+        return fs;
     }
 
     @Override
