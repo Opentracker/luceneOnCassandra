@@ -295,4 +295,11 @@ public class CassandraFileSystem extends FileSystem {
         return null;
     }
 
+    // Override if the platform uses different Unicode normalization form
+    // for native file path. For example on MacOSX, the native path is stored
+    // in Unicode NFD form.
+    public char[] normalizeNativePath(char[] path) {
+        return path;
+    }
+
 }
