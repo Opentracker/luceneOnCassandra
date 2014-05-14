@@ -123,7 +123,7 @@ class NativeFSLock extends Lock {
   public NativeFSLock(File lockDir, String lockFileName) {
     this.lockDir = lockDir;
     //path = new File(lockDir, lockFileName);
-    path = lockDir.get(lockFileName);
+    path = lockDir.get(lockDir, lockFileName);
   }
 
   @Override
