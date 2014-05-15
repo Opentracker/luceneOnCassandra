@@ -23,7 +23,7 @@ public class CassandraFileSystem extends FileSystem {
     
     private final CassandraFileSystemProvider provider;
     private final byte[] defaultDirectory;
-    //private final boolean needToResolveAgainstDefaultDirectory;
+    private final boolean needToResolveAgainstDefaultDirectory;
     private final CassandraPath rootDirectory;
     
     CassandraFileSystem(CassandraFileSystemProvider provider, String dir) {
@@ -32,7 +32,7 @@ public class CassandraFileSystem extends FileSystem {
         if (this.defaultDirectory[0] != '/') {
             throw new RuntimeException("default directory must be absolute");
         }
-        
+        this.needToResolveAgainstDefaultDirectory = true;
         // the root directory
         this.rootDirectory = new CassandraPath(this, "/");
     }
@@ -41,11 +41,9 @@ public class CassandraFileSystem extends FileSystem {
         return defaultDirectory;
     }
     
-    /*
     boolean needToResolveAgainstDefaultDirectory() {
         return needToResolveAgainstDefaultDirectory;
     }
-    */
     
     CassandraPath rootDirectory() {
         return rootDirectory;
