@@ -2,6 +2,7 @@ package org.apache.lucene.cassandra;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -12,6 +13,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.ProviderMismatchException;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
@@ -146,6 +148,31 @@ public class CassandraFileSystemProvider extends FileSystemProvider {
             LinkOption... options) throws IOException {
         // TODO Auto-generated method stub
         
+    }
+    
+    @Override
+    public FileChannel newFileChannel(Path obj,
+                                      Set<? extends OpenOption> options,
+                                      FileAttribute<?>... attrs)
+        throws IOException
+    {
+        CassandraPath file = checkPath(obj);
+        int mode = CassandraFileModeAttribute
+            .toCassandraMode(CassandraFileModeAttribute.ALL_READWRITE, attrs);
+        try {
+            return CassandraChannelFactory.newFileChannel(file, options, mode);
+        } catch (CassandraException x) {
+            x.rethrowAsIOException(file);
+            return null;
+        }
+    }
+    
+    CassandraPath checkPath(Path obj) {
+        if (obj == null)
+            throw new NullPointerException();
+        if (!(obj instanceof CassandraPath))
+            throw new ProviderMismatchException();
+        return (CassandraPath)obj;
     }
     
 }
