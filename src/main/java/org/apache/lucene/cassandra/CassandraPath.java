@@ -125,7 +125,7 @@ public class CassandraPath implements Path  {
     }
 
     @Override
-    public FileSystem getFileSystem() {
+    public CassandraFileSystem getFileSystem() {
         return fs;
     }
 
@@ -139,6 +139,64 @@ public class CassandraPath implements Path  {
     public Path getRoot() {
         // TODO Auto-generated method stub
         return null;
+    }
+    
+    // package-private
+    byte[] asByteArray() {
+        return path;
+    }
+    
+    // use this path for permission checks
+    String getPathForPermissionCheck() {
+        if (getFileSystem().needToResolveAgainstDefaultDirectory()) {
+            return new String(getByteArrayForSysCalls());
+        } else {
+            return toString();
+        }
+    }
+    
+    // use this path when making system/library calls
+    byte[] getByteArrayForSysCalls() {
+        // resolve against default directory if required (chdir allowed or
+        // file system default directory is not working directory)
+        if (getFileSystem().needToResolveAgainstDefaultDirectory()) {
+            return resolve(getFileSystem().defaultDirectory(), path);
+        } else {
+            if (!isEmpty()) {
+                return path;
+            } else {
+                // empty path case will access current directory
+                byte[] here = { '.' };
+                return here;
+            }
+        }
+    }
+    
+    // returns {@code true} if this path is an empty path
+    private boolean isEmpty() {
+        return path.length == 0;
+    }
+    
+    // Resolve child against given base
+    private static byte[] resolve(byte[] base, byte[] child) {
+        int baseLength = base.length;
+        int childLength = child.length;
+        if (childLength == 0)
+            return base;
+        if (baseLength == 0 || child[0] == '/')
+            return child;
+        byte[] result;
+        if (baseLength == 1 && base[0] == '/') {
+            result = new byte[childLength + 1];
+            result[0] = '/';
+            System.arraycopy(child, 0, result, 1, childLength);
+        } else {
+            result = new byte[baseLength + 1 + childLength];
+            System.arraycopy(base, 0, result, 0, baseLength);
+            result[base.length] = '/';
+            System.arraycopy(child, 0, result, baseLength+1, childLength);
+        }
+        return result;
     }
 
     @Override
@@ -279,6 +337,10 @@ public class CassandraPath implements Path  {
     public int compareTo(Path other) {
         // TODO Auto-generated method stub
         return 0;
+    }
+
+    public String getPathForExceptionMessage() {
+        return toString();
     }
 
 }
