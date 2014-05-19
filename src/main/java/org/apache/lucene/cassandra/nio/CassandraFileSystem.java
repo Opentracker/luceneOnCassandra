@@ -1,4 +1,4 @@
-package org.apache.lucene.cassandra;
+package org.apache.lucene.cassandra.nio;
 
 import java.io.IOException;
 import java.nio.file.FileStore;
@@ -26,7 +26,7 @@ public class CassandraFileSystem extends FileSystem {
     private final boolean needToResolveAgainstDefaultDirectory;
     private final CassandraPath rootDirectory;
     
-    CassandraFileSystem(CassandraFileSystemProvider provider, String dir) {
+    public CassandraFileSystem(CassandraFileSystemProvider provider, String dir) {
         this.provider = provider;
         this.defaultDirectory = CassandraPath.normalizeAndCheck(dir).getBytes();
         if (this.defaultDirectory[0] != '/') {
