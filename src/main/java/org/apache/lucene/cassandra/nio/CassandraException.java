@@ -1,4 +1,4 @@
-package org.apache.lucene.cassandra;
+package org.apache.lucene.cassandra.nio;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
