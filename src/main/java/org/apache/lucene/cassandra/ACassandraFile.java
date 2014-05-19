@@ -23,6 +23,8 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.cassandra.utils.ByteBufferUtil;
+import org.apache.lucene.cassandra.nio.CassandraFileSystem;
+import org.apache.lucene.cassandra.nio.CassandraFileSystemProvider;
 import org.apache.lucene.store.IOContext;
 import org.apache.monitor.Counter;
 import org.apache.monitor.JmxMonitor;
