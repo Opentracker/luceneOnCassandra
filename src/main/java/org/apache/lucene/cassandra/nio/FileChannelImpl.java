@@ -1,4 +1,4 @@
-package org.apache.lucene.cassandra;
+package org.apache.lucene.cassandra.nio;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
