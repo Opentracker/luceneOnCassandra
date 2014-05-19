@@ -1,4 +1,4 @@
-package org.apache.lucene.cassandra;
+package org.apache.lucene.cassandra.nio;
 
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
