@@ -1,4 +1,4 @@
-package org.apache.lucene.cassandra;
+package org.apache.lucene.cassandra.nio;
 
 import java.nio.channels.FileChannel;
 import java.nio.file.LinkOption;
@@ -9,8 +9,8 @@ import java.util.Set;
 import sun.misc.JavaIOFileDescriptorAccess;
 import sun.misc.SharedSecrets;
 
-import static org.apache.lucene.cassandra.CassandraNativeDispatcher.*;
-import static org.apache.lucene.cassandra.CassandraConstants.*;
+import static org.apache.lucene.cassandra.nio.CassandraNativeDispatcher.*;
+import static org.apache.lucene.cassandra.nio.CassandraConstants.*;
 
 public class CassandraChannelFactory {
     
