@@ -1,4 +1,4 @@
-package org.apache.lucene.cassandra;
+package org.apache.lucene.cassandra.nio;
 
 public class CassandraConstants {
 
