@@ -135,8 +135,17 @@ public class FileChannelImpl extends FileChannel {
     @Override
     public FileLock tryLock(long position, long size, boolean shared)
             throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        return new FileLock(this, position, size, shared) {
+
+            @Override
+            public void release() throws IOException {
+            }
+
+            @Override
+            public boolean isValid() {
+                return true;
+            }
+        };
     }
 
     @Override
