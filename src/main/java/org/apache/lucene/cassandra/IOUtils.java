@@ -34,6 +34,10 @@ public class IOUtils {
           RandomAccessFile file = null;
           try {
             try {
+              if (fileToSync.getAbsolutePath() == null) {
+                success = true;
+                continue;
+              }
               file = fileToSync.getRandomAccessFile(fileToSync, "rw");
 //              file = new RandomAccessFile(fullFile, "rw");
               file.getFDsync();
