@@ -361,5 +361,11 @@ public interface File {
     public String getAbsolutePath();
 
     public Path toPath();
+    
+    public boolean renameTo(File file);
+    
+    public long getTotalSpace();
+    
+    public long getUsableSpace();
 
 }
