@@ -367,5 +367,11 @@ public interface File {
     public long getTotalSpace();
     
     public long getUsableSpace();
-
+    
+    public long getFreeSpace();
+    
+    public File[] listFiles();
+    
+    public String getName();
+    
 }
