@@ -24,8 +24,14 @@
    <version>0.0.2-SNAPSHOT</version>
    <name>Lucene on Cassandra</name>
    <description>Store lucene indices on cassandra</description>
-
+   <inceptionYear>2014</inceptionYear>
    <packaging>jar</packaging>
+
+   <scm>
+      <connection>scm:git:git@github.com:Opentracker/luceneOnCassandra.git</connection>
+      <developerConnection>scm:git:git@github.com:Opentracker/luceneOnCassandra.git</developerConnection>
+      <url>http://github.com/Opentracker/luceneOnCassandra.git</url>
+   </scm>
 
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
