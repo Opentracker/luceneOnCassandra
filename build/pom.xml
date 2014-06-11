@@ -26,12 +26,18 @@
    <description>Store lucene indices on cassandra</description>
    <inceptionYear>2014</inceptionYear>
    <packaging>jar</packaging>
+   <url>http://www.opentracker.net</url>
 
    <scm>
       <connection>scm:git:git@github.com:Opentracker/luceneOnCassandra.git</connection>
       <developerConnection>scm:git:git@github.com:Opentracker/luceneOnCassandra.git</developerConnection>
       <url>http://github.com/Opentracker/luceneOnCassandra.git</url>
    </scm>
+
+   <issueManagement>
+    <system>jira</system>
+    <url>https://opentracker.atlassian.net/</url>
+   </issueManagement>
 
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -45,6 +51,33 @@
       <project.hector.opentracker>${project.basedir}/../lib/hector-core-1.0-3-opentracker.jar</project.hector.opentracker>
       <project.zoie.core>${project.basedir}/../lib/zoie-core-3.2.0.jar</project.zoie.core>
    </properties>
+
+   <developers>
+      <developer>
+         <id>jasonwee</id>
+         <name>Jason Wee</name>
+         <email>jason@opentracker.net</email>
+         <organization>Opentracker</organization>
+         <organizationUrl>http://www.opentracker.net</organizationUrl>
+         <roles>
+           <role>developer</role>
+           <role>architect</role>
+         </roles>
+         <timezone>+8</timezone>
+      </developer>
+      <developer>
+         <id>eddie</id>
+         <name>Eddie Moojen</name>
+         <email>eddie@opentracker.net</email>
+         <organization>Opentracker</organization>
+         <organizationUrl>http://www.opentracker.net</organizationUrl>
+         <roles>
+           <role>developer</role>
+           <role>architect</role>
+         </roles>
+         <timezone>+1</timezone>
+      </developer>
+   </developers>
 
    <build>
       <sourceDirectory>../src/main/java</sourceDirectory>
