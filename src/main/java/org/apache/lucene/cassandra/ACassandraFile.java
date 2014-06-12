@@ -195,6 +195,14 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         getACFTime += System.currentTimeMillis() - ms;
 
     }
+    
+    public ACassandraFile(File parent, String child) {
+        if (child == null) {
+            throw new NullPointerException();
+        }
+        String path = parent.getAbsolutePath();
+        new ACassandraFile(path, child, IOContext.DEFAULT, true, "lucene0", "index0", 16384);
+    }
 
     /**
      * check if file exists in cassandra by checking if row exists.
@@ -951,6 +959,44 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
             }
         }
         return result;
+    }
+    
+    @Override
+    public boolean renameTo(File file) {
+        if (file == null) {
+            throw new NullPointerException();
+        }
+        if (fd == null) {
+            return false;
+        }
+        // TODO do rename now.
+        logger.info("RENAME IS CALLED!!! ");
+        return true;
+    }
+    
+    public long getTotalSpace() {
+        logger.info("getTotalSpace() IS CALLED!!! ");
+        return Long.MAX_VALUE;
+    }
+    
+    public long getUsableSpace() {
+        logger.info("getUsableSpace() IS CALLED!!! ");
+        return Long.MAX_VALUE;
+    }
+    
+    public long getFreeSpace() {
+        logger.info("getFreeSpace() IS CALLED!!! ");
+        return Long.MAX_VALUE;
+    }
+    
+    public File[] listFiles() {
+        logger.info("listFiles() IS CALLED!!! ");
+        String[] files = list();
+        List<File> fl = new ArrayList<File>();
+        for (String file : files) {
+            fl.add(new ACassandraFile(file));
+        }
+        return fl.toArray(new ACassandraFile[fl.size()]);
     }
 
     @Override
