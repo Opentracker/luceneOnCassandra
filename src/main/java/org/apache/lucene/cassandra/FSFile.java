@@ -218,6 +218,36 @@ public class FSFile implements File, Serializable {
     public Path toPath() {
         return thePrivateFile.toPath();
     }
+    
+    @Override
+    public boolean renameTo(File file) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+    
+    public long getTotalSpace() {
+        logger.info("getTotalSpace() IS CALLED!!! ");
+        return Long.MAX_VALUE;
+    }
+    
+    public long getUsableSpace() {
+        logger.info("getUsableSpace() IS CALLED!!! ");
+        return Long.MAX_VALUE;
+    }
+    
+    public long getFreeSpace() {
+        logger.info("getFreeSpace() IS CALLED!!! ");
+        return Long.MAX_VALUE;
+    }
+    
+    public File[] listFiles() {
+        // TODO implement this
+        return null;
+    }
+    
+    public String getName() {
+        return thePrivateFile.getName();
+    }
 
     // @Override
     // public RandomAccessFile getRandomAccessFile(File fullFile,
