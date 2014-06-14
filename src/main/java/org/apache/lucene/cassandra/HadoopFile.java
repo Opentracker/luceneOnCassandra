@@ -373,5 +373,35 @@ public class HadoopFile implements File, Serializable {
         // TODO Auto-generated method stub
         return null;
     }
+    
+    @Override
+    public boolean renameTo(File file) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+    
+    public long getTotalSpace() {
+        logger.info("getTotalSpace() IS CALLED!!! ");
+        return Long.MAX_VALUE;
+    }
+    
+    public long getUsableSpace() {
+        logger.info("getUsableSpace() IS CALLED!!! ");
+        return Long.MAX_VALUE;
+    }
+    
+    public long getFreeSpace() {
+        logger.info("getFreeSpace() IS CALLED!!! ");
+        return Long.MAX_VALUE;
+    }
+    
+    public File[] listFiles() {
+        // TODO Implement this.
+        return null;
+    }
+    
+    public String getName() {
+        return thePrivateFile.getName();
+    }
 
 }
