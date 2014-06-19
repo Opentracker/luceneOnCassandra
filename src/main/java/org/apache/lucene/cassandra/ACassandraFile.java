@@ -41,7 +41,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
 
     private String columnFamily = null;
 
-    private String cassandraDirectory = "/";
+    private String cassandraDirectory = "";
 
     private IOContext mode = null;
 
@@ -118,8 +118,10 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         return araf;
     }
 
+    // TODO, this is wrong.
     public ACassandraFile(String canonicalPath) {
-        new ACassandraFile(null, canonicalPath, IOContext.DEFAULT, true,
+        String[] tokens = canonicalPath.split("\\/(?=[^\\/]+$)");
+        new ACassandraFile(tokens[0], tokens[1], IOContext.DEFAULT, true,
                 "lucene0", "index0", 16384);
     }
     public static int getACFCount = 0;
@@ -142,13 +144,18 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
             directory = cassandraDirectory;
             this.name = directory + name;
         } else {
-            this.name = directory + name;
+            if (!directory.equals("/")) {
+                this.name = directory + "/" + name;
+            } else {
+                this.name = directory + name;
+            }
         }
         this.mode = mode;
         this.blockSize = blockSize;
         this.keyspace = keyspace;
         this.columnFamily = columnFamily;
         this.cassandraDirectory = directory;
+        logger.info("cassandraDirectory {} name {}", cassandraDirectory, name);
         this.fs = new CassandraFileSystem(provider, cassandraDirectory);
         boolean readOnly = true;
         monitor = JmxMonitor.getInstance().getCassandraMonitor(this);
@@ -196,12 +203,15 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
 
     }
     
+    // simple way to initializing ACassandraFile, the real implementation will probably
+    // have to comply to the java.io.File(File parent, String child)
     public ACassandraFile(File parent, String child) {
+        
+        this(parent.getAbsolutePath(), child, IOContext.DEFAULT, true, "lucene0", "index0", 16384);
+        
         if (child == null) {
             throw new NullPointerException();
         }
-        String path = parent.getAbsolutePath();
-        new ACassandraFile(path, child, IOContext.DEFAULT, true, "lucene0", "index0", 16384);
     }
 
     /**
@@ -253,9 +263,11 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
 
         String[] files = {};
         try {
-            if (columnOrientedDirectory == null)
+            if (columnOrientedDirectory == null) {
                 return files;
+            }
             files = columnOrientedDirectory.getFileNames();
+            logger.info("files length " + files.length);
         } catch (IOException e) {
             logger.error("unable to list ", e);
         }
@@ -281,15 +293,18 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
     }
 
     public String getCanonicalPath() throws IOException {
-        if (cassandraDirectory == null) {
-            logger.trace(
+        /*
+        if (cassandraDirectory == null && name != null) {
+            logger.info(
                     "called getCanonicalPath returning default / for file {}",
                     name);
-            return new String("/");
+            return name;
         }
-        logger.trace("called getCanonicalPath returning {} for file {}",
+        logger.info("called getCanonicalPath returning {} for file {}",
                 cassandraDirectory, name);
         return cassandraDirectory;
+        */
+        return name;
     }
 
     public long length() {
