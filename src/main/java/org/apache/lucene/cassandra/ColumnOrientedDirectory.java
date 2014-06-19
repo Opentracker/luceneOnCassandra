@@ -84,6 +84,10 @@ public class ColumnOrientedDirectory {
     protected FileDescriptor getFileDescriptor(String fileName,
             boolean createIfNotFound) throws IOException {
         logger.trace("fileName {} createIfNotFound {}", fileName, createIfNotFound);
+        if (cassandraClient == null) logger.error("cassandraClient is null");
+        if (fileName == null) {
+            return null;
+        }
         FileDescriptor fileDescriptor =
                 FileDescriptorUtils.fromBytes(cassandraClient.getColumn(
                         fileName.getBytes(), descriptorColumn.getBytes()), blockSize);
