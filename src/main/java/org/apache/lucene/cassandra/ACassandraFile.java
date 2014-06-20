@@ -118,12 +118,72 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         return araf;
     }
 
-    // TODO, this is wrong.
     public ACassandraFile(String canonicalPath) {
         String[] tokens = canonicalPath.split("\\/(?=[^\\/]+$)");
-        new ACassandraFile(tokens[0], tokens[1], IOContext.DEFAULT, true,
-                "lucene0", "index0", 16384);
+        
+        String directory = tokens[0];
+        String name = tokens[1];
+        
+        if (directory == null) {
+            this.name = directory + name;
+        } else {
+            if (!directory.equals("/")) {
+                this.name = directory + "/" + name;
+            } else {
+                this.name = directory + name;
+            }
+        }
+        this.name = this.name.replaceAll("//", "/");
+        this.mode = IOContext.DEFAULT;
+        this.blockSize = 16384;
+        this.keyspace = "lucene0";
+        this.columnFamily = "index0";
+        this.cassandraDirectory = directory;
+        logger.info("cassandraDirectory {} name {}", cassandraDirectory, name);
+        this.fs = new CassandraFileSystem(provider, cassandraDirectory);
+        boolean readOnly = true;
+        monitor = JmxMonitor.getInstance().getCassandraMonitor(this);
+        try {
+            cassandraClient =
+                    new CassandraClient("localhost", 9160, true, keyspace,
+                            columnFamily, blockSize);
+            this.columnOrientedDirectory =
+                    new ColumnOrientedDirectory(cassandraClient, blockSize);
+            this.columnOrientedFile = new ColumnOrientedFile(cassandraClient);
+            if (mode == null
+                    || mode.context == IOContext.Context.DEFAULT
+                    || mode.context == IOContext.Context.FLUSH
+                    || mode.context == IOContext.Context.MERGE
+                    || (mode.context == IOContext.Context.READ && name
+                            .equals("segments.gen"))) {
+                // when mode == null when writing write.lock
+                this.fd =
+                        this.columnOrientedDirectory.getFileDescriptor(
+                                this.name, true);
+                readOnly = false;
+            } else if (mode.context == IOContext.Context.READ) {
+                this.fd =
+                        this.columnOrientedDirectory
+                                .getFileDescriptor(this.name);
+                readOnly = true;
+            }
+            if (fd == null) {
+                if (!readOnly) {
+                    throw new IOException(
+                            "fd is null, unable to retrieve file " + this.name);
+                }
+            } else {
+                length = fd.getLength();
+                currentBlock = fd.getFirstBlock();
+            }
+            if (mode.context == IOContext.Context.MERGE) {
+                isModeMerge = true;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
+    
     public static int getACFCount = 0;
 
     public static long getACFTime = 0;
@@ -150,6 +210,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
                 this.name = directory + name;
             }
         }
+        this.name = this.name.replaceAll("//", "/");
         this.mode = mode;
         this.blockSize = blockSize;
         this.keyspace = keyspace;
