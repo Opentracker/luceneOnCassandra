@@ -374,4 +374,16 @@ public interface File {
     
     public String getName();
     
+    /**
+     * Similar to java.io.File getParent(); use this as a replacement.
+     *
+     * @param dummy  just a dummy parameter is not significant as it not used. it
+     *                               is added here to distinguished another method getParent()
+     *                               from class Path. See ACassandraFile.
+     * @return
+     */
+    public String getParent(boolean dummy);
+
+    public File getParentFile();
+
 }
