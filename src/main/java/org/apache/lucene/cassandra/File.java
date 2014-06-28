@@ -17,11 +17,10 @@ package org.apache.lucene.cassandra;
  * limitations under the License.
  */
 
+import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
-
-import org.slf4j.Logger;
 
 /**
  * An representation of file and directory pathnames.
@@ -372,6 +371,8 @@ public interface File {
     
     public File[] listFiles();
     
+    public File[] listFiles(FileFilter filter);
+
     public String getName();
     
     /**
@@ -385,5 +386,7 @@ public interface File {
     public String getParent(boolean dummy);
 
     public File getParentFile();
+
+    public boolean canRead();
 
 }
