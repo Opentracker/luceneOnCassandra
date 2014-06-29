@@ -1,6 +1,7 @@
 package org.apache.lucene.cassandra;
 
 import java.io.Closeable;
+import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1073,6 +1074,43 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
             fl.add(new ACassandraFile(file));
         }
         return fl.toArray(new ACassandraFile[fl.size()]);
+    }
+    
+    public File[] listFiles(FileFilter filter) {
+        String ss[] = list();
+        if (ss == null) return null;
+        
+        logger.info("listFiles(FileFilter filter) IS CALLED!!! ");
+        /*
+        ArrayList<File> files = new ArrayList<>();
+        for (String s : ss) {
+            File f = new ACassandraFile(s, this);
+            if ((filter == null) || filter.accept(f))
+                files.add(f);
+        }
+        return files.toArray(new File[files.size()]);
+        */
+        return null;
+        
+    }
+    
+    public String getParent(boolean dummy) {
+        int index = name.lastIndexOf("/");
+        if (name.substring(0, index).equals("")) {
+            return null;
+        } else {
+            return name.substring(0, index);
+        }
+    }
+    
+    public File getParentFile() {
+        String p = this.getParent(true);
+        if (p == null) return null;
+        return new ACassandraFile(p);
+    }
+    
+    public boolean canRead() {
+        return true;
     }
 
     @Override
