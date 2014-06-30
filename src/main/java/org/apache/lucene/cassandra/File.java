@@ -371,7 +371,27 @@ public interface File {
     
     public File[] listFiles();
     
-    public File[] listFiles(FileFilter filter);
+    /**
+     * Returns an array of abstract pathnames denoting the files and
+     * directories in the directory denoted by this abstract pathname that
+     * satisfy the specified filter.  The behavior of this method is the same
+     * as that of the {@link #listFiles()} method, except that the pathnames in
+     * the returned array must satisfy the filter.  If the given {@code filter}
+     * is {@code null} then all pathnames are accepted.  Otherwise, a pathname
+     * satisfies the filter if and only if the value {@code true} results when
+     * the {@link CassandraFileFilter#accept CassandraFileFilter.accept(File)}
+     * method of the filter is invoked on the pathname.
+     *
+     * @param  filter
+     *         A file filter
+     *
+     * @return  An array of abstract pathnames denoting the files and
+     *          directories in the directory denoted by this abstract pathname.
+     *          The array will be empty if the directory is empty.  Returns
+     *          {@code null} if this abstract pathname does not denote a
+     *          directory, or if an I/O error occurs.
+     */
+    public File[] listFiles(CassandraFileFilter filter);
 
     public String getName();
     
