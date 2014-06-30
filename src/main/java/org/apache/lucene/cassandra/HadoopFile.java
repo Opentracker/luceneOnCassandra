@@ -18,6 +18,7 @@ package org.apache.lucene.cassandra;
  */
 
 //import java.util.ArrayList;
+import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
@@ -400,8 +401,28 @@ public class HadoopFile implements File, Serializable {
         return null;
     }
     
+    public File[] listFiles(FileFilter filter) {
+        // TODO Implement this.
+        return null;
+    }
+    
     public String getName() {
         return thePrivateFile.getName();
+    }
+    
+    public String getParent(boolean dummy) {
+        // TODO Implement this.
+        return null;
+    }
+    
+    public File getParentFile() {
+        // TODO Implement this.
+        return null;
+    }
+    
+    public boolean canRead() {
+     // TODO Implement this.
+        return false;
     }
 
 }
