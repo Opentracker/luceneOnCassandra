@@ -1076,22 +1076,19 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         return fl.toArray(new ACassandraFile[fl.size()]);
     }
     
-    public File[] listFiles(FileFilter filter) {
+    public File[] listFiles(CassandraFileFilter filter) {
         String ss[] = list();
         if (ss == null) return null;
         
         logger.info("listFiles(FileFilter filter) IS CALLED!!! ");
-        /*
+
         ArrayList<File> files = new ArrayList<>();
         for (String s : ss) {
-            File f = new ACassandraFile(s, this);
+            File f = new ACassandraFile(this, s);
             if ((filter == null) || filter.accept(f))
                 files.add(f);
         }
         return files.toArray(new File[files.size()]);
-        */
-        return null;
-        
     }
     
     public String getParent(boolean dummy) {
