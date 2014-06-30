@@ -246,7 +246,7 @@ public class FSFile implements File, Serializable {
         return null;
     }
     
-    public File[] listFiles(FileFilter filter) {
+    public File[] listFiles(CassandraFileFilter filter) {
         // TODO implement this
         return null;
     }
