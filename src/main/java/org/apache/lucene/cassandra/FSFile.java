@@ -18,6 +18,7 @@ package org.apache.lucene.cassandra;
  */
 
 //import java.util.ArrayList;
+import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
@@ -243,6 +244,26 @@ public class FSFile implements File, Serializable {
     public File[] listFiles() {
         // TODO implement this
         return null;
+    }
+    
+    public File[] listFiles(FileFilter filter) {
+        // TODO implement this
+        return null;
+    }
+    
+    public String getParent(boolean dummy) {
+     // TODO implement this
+        return null;
+    }
+    
+    public File getParentFile() {
+     // TODO implement this
+        return null;
+    }
+    
+    public boolean canRead() {
+        // TODO implement this
+        return false;
     }
     
     public String getName() {
