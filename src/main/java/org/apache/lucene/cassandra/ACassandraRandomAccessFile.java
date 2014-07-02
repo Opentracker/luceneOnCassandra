@@ -65,6 +65,9 @@ public class ACassandraRandomAccessFile implements RandomAccessFile,
 
     public void close() throws IOException {
         logger.trace("called close");
+        if (channel != null) {
+            channel.close();
+        }
         file.close();
     }
 
