@@ -4,7 +4,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.Serializable;
 import java.io.SyncFailedException;
-import java.nio.channels.FileChannel;
 
 import org.apache.lucene.store.IOContext;
 import org.slf4j.Logger;
@@ -140,11 +139,6 @@ public class CassandraRandomAccessFile implements Serializable {
         }
         
         return false;
-    }
-    
-    public FileChannel getChannel() {
-        // TODO how to implement?
-        return null;
     }
 
 }
