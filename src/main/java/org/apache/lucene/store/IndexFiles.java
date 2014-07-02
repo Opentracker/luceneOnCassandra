@@ -287,7 +287,7 @@ public class IndexFiles {
             System.out.println(end.getTime() - start.getTime()
                     + " total milliseconds");
             logger.error("write/ ms {}/ {} ms",
-                    ACassandraRandomAccessFile.writeCount, ACassandraRandomAccessFile.writeTime);
+                    ACassandraFile.writeCount, ACassandraFile.writeTime);
             logger.error("read/ ms {}/ {} ms",
                     ACassandraRandomAccessFile.readCount, ACassandraRandomAccessFile.readTime);
             logger.error("seek/ ms {}/ {} ms",
@@ -462,7 +462,7 @@ public class IndexFiles {
                                 (runtime.totalMemory() - runtime.freeMemory()),
                                 runtime.totalMemory());
                         logger.error("write/ ms {}/ {} ms",
-                                ACassandraRandomAccessFile.writeCount, ACassandraRandomAccessFile.writeTime);
+                                ACassandraFile.writeCount, ACassandraFile.writeTime);
                         logger.error("read/ ms {}/ {} ms",
                                 ACassandraRandomAccessFile.readCount, ACassandraRandomAccessFile.readTime);
                         logger.error("seek/ ms {}/ {} ms",
