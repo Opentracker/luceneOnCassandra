@@ -6,6 +6,8 @@ import java.nio.file.OpenOption;
 import java.nio.file.StandardOpenOption;
 import java.util.Set;
 
+import org.apache.lucene.cassandra.FileDescriptor;
+
 import sun.misc.JavaIOFileDescriptorAccess;
 import sun.misc.SharedSecrets;
 
@@ -98,7 +100,9 @@ public class CassandraChannelFactory {
         if (flags.append && flags.truncateExisting)
             throw new IllegalArgumentException("APPEND + TRUNCATE_EXISTING not allowed");
 
-        java.io.FileDescriptor fdObj = open(dfd, path, pathForPermissionCheck, flags, mode);
+        // TODO This need to be fix.
+        //FileDescriptor fdObj = open(dfd, path, pathForPermissionCheck, flags, mode);
+        FileDescriptor fdObj = null;
         return FileChannelImpl.open(fdObj, flags.read, flags.write, flags.append, null);
     }
     
