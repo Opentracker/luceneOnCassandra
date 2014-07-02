@@ -3,8 +3,9 @@ package org.apache.lucene.cassandra;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.Serializable;
-import java.io.SyncFailedException;
+import java.nio.channels.FileChannel;
 
+import org.apache.lucene.cassandra.nio.FileChannelImpl;
 import org.apache.lucene.store.IOContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,9 @@ public class ACassandraRandomAccessFile implements RandomAccessFile,
     private static final long serialVersionUID = 1L;
 
     ACassandraFile file;
+
+    private FileChannel channel = null;
+    private IOContext mode = null;
 
     private static Logger logger = LoggerFactory
             .getLogger(ACassandraRandomAccessFile.class);
@@ -203,6 +207,21 @@ public class ACassandraRandomAccessFile implements RandomAccessFile,
         }
 
         return false;
+    }
+
+    public FileChannel getChannel() {
+        synchronized (this) {
+            if (channel == null) {
+                boolean rw = false;
+                if (mode.context == IOContext.Context.READ) {
+                    rw = false;
+                } else if (mode.context == IOContext.Context.DEFAULT) {
+                    rw = true;
+                }
+                channel = FileChannelImpl.open(file.getFD(), true, rw, this);
+            }
+            return channel;
+        }
     }
 
 }
