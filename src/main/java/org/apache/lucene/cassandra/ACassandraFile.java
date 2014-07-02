@@ -1047,27 +1047,27 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
             return false;
         }
         // TODO do rename now.
-        logger.info("RENAME IS CALLED!!! ");
+        logger.error("RENAME IS CALLED!!! ");
         return true;
     }
     
     public long getTotalSpace() {
-        logger.info("getTotalSpace() IS CALLED!!! ");
+        logger.error("getTotalSpace() IS CALLED!!! ");
         return Long.MAX_VALUE;
     }
     
     public long getUsableSpace() {
-        logger.info("getUsableSpace() IS CALLED!!! ");
+        logger.error("getUsableSpace() IS CALLED!!! ");
         return Long.MAX_VALUE;
     }
     
     public long getFreeSpace() {
-        logger.info("getFreeSpace() IS CALLED!!! ");
+        logger.error("getFreeSpace() IS CALLED!!! ");
         return Long.MAX_VALUE;
     }
     
     public File[] listFiles() {
-        logger.info("listFiles() IS CALLED!!! ");
+        logger.error("listFiles() IS CALLED!!! ");
         String[] files = list();
         List<File> fl = new ArrayList<File>();
         for (String file : files) {
@@ -1080,7 +1080,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         String ss[] = list();
         if (ss == null) return null;
         
-        logger.info("listFiles(FileFilter filter) IS CALLED!!! ");
+        logger.error("listFiles(FileFilter filter) IS CALLED!!! ");
 
         ArrayList<File> files = new ArrayList<>();
         for (String s : ss) {
