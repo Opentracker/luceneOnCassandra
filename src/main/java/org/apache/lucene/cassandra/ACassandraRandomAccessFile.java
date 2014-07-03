@@ -221,7 +221,7 @@ public class ACassandraRandomAccessFile implements RandomAccessFile,
                 } else if (mode.context == IOContext.Context.DEFAULT) {
                     rw = true;
                 }
-                channel = FileChannelImpl.open(file.getFD(), true, rw, this);
+                channel = FileChannelImpl.open(file.getFD(), file.getName(), true, rw, this);
             }
             return channel;
         }
