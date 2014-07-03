@@ -14,6 +14,7 @@ import sun.misc.SharedSecrets;
 import static org.apache.lucene.cassandra.nio.CassandraNativeDispatcher.*;
 import static org.apache.lucene.cassandra.nio.CassandraConstants.*;
 
+// http://grepcode.com/file_/repository.grepcode.com/java/root/jdk/openjdk/7u40-b43/sun/nio/fs/UnixChannelFactory.java/?v=source
 public class CassandraChannelFactory {
     
     private static final JavaIOFileDescriptorAccess fdAccess =
@@ -101,16 +102,17 @@ public class CassandraChannelFactory {
             throw new IllegalArgumentException("APPEND + TRUNCATE_EXISTING not allowed");
 
         // TODO This need to be fix.
-        //FileDescriptor fdObj = open(dfd, path, pathForPermissionCheck, flags, mode);
-        FileDescriptor fdObj = null;
-        return FileChannelImpl.open(fdObj, flags.read, flags.write, flags.append, null);
+        FileDescriptor fdObj = open(dfd, path, pathForPermissionCheck, flags, mode);
+        return FileChannelImpl.open(fdObj, path.toString(), flags.read, flags.write, flags.append, null);
     }
     
     /**
      * Opens file based on parameters and options, returning a FileDescriptor
      * encapsulating the handle to the open file.
+     * 
+     * TODO test me for cassandra.
      */
-    protected static java.io.FileDescriptor open(int dfd,
+    protected static FileDescriptor open(int dfd,
                                          CassandraPath path,
                                          String pathForPermissionCheck,
                                          Flags flags,
@@ -210,8 +212,10 @@ public class CassandraChannelFactory {
         }
 
         // create java.io.FileDescriptor
-        java.io.FileDescriptor fdObj = new java.io.FileDescriptor();
-        fdAccess.set(fdObj, fd);
+        // TODO fix me below.
+        FileDescriptor fdObj = new FileDescriptor(null, 16384);
+        // TODO fix me below
+        //fdAccess.set(fdObj, fd);
         return fdObj;
     }
 
