@@ -34,6 +34,89 @@ class IOUtil {
         }
     }
     
+    static long read(FileDescriptor fd, ByteBuffer[] bufs, int offset,
+            int length, NativeDispatcher nd) throws IOException {
+        IOVecWrapper vec = IOVecWrapper.get(length);
+
+        boolean completed = false;
+        int iov_len = 0;
+        try {
+
+            // Iterate over buffers to populate native iovec array.
+            int count = offset + length;
+            int i = offset;
+            while (i < count && iov_len < IOV_MAX) {
+                ByteBuffer buf = bufs[i];
+                if (buf.isReadOnly())
+                    throw new IllegalArgumentException("Read-only buffer");
+                int pos = buf.position();
+                int lim = buf.limit();
+                assert (pos <= lim);
+                int rem = (pos <= lim ? lim - pos : 0);
+
+                if (rem > 0) {
+                    vec.setBuffer(iov_len, buf, pos, rem);
+
+                    // allocate shadow buffer to ensure I/O is done with direct
+                    // buffer
+                    if (!(buf instanceof DirectBuffer)) {
+                        ByteBuffer shadow = Util.getTemporaryDirectBuffer(rem);
+                        vec.setShadow(iov_len, shadow);
+                        buf = shadow;
+                        pos = shadow.position();
+                    }
+
+                    vec.putBase(iov_len, ((DirectBuffer) buf).address() + pos);
+                    vec.putLen(iov_len, rem);
+                    iov_len++;
+                }
+                i++;
+            }
+            if (iov_len == 0)
+                return 0L;
+
+            long bytesRead = nd.readv(fd, vec.address, iov_len);
+
+            // Notify the buffers how many bytes were read
+            long left = bytesRead;
+            for (int j = 0; j < iov_len; j++) {
+                ByteBuffer shadow = vec.getShadow(j);
+                if (left > 0) {
+                    ByteBuffer buf = vec.getBuffer(j);
+                    int rem = vec.getRemaining(j);
+                    int n = (left > rem) ? rem : (int) left;
+                    if (shadow == null) {
+                        int pos = vec.getPosition(j);
+                        buf.position(pos + n);
+                    } else {
+                        shadow.limit(shadow.position() + n);
+                        buf.put(shadow);
+                    }
+                    left -= n;
+                }
+                if (shadow != null)
+                    Util.offerLastTemporaryDirectBuffer(shadow);
+                vec.clearRefs(j);
+            }
+
+            completed = true;
+            return bytesRead;
+
+        } finally {
+            // if an error occurred then clear refs to buffers and return any
+            // shadow
+            // buffers to cache
+            if (!completed) {
+                for (int j = 0; j < iov_len; j++) {
+                    ByteBuffer shadow = vec.getShadow(j);
+                    if (shadow != null)
+                        Util.offerLastTemporaryDirectBuffer(shadow);
+                    vec.clearRefs(j);
+                }
+            }
+        }
+    }
+    
     private static int readIntoNativeBuffer(FileDescriptor fd, ByteBuffer bb,
             long position, NativeDispatcher nd) throws IOException {
         int pos = bb.position();

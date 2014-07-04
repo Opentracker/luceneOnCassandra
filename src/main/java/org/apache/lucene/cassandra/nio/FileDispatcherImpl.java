@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.lucene.cassandra.FileDescriptor;
 
+// http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/7u40-b43/sun/nio/ch/FileDispatcherImpl.java#FileDispatcherImpl
 class FileDispatcherImpl extends FileDispatcher {
     
     /**
@@ -58,5 +59,13 @@ class FileDispatcherImpl extends FileDispatcher {
         // TODO Auto-generated method stub
         return 0;
     }
+    
+    @Override
+    long readv(FileDescriptor fd, long address, int len) throws IOException {
+        return readv0(fd, address, len);
+    }
+    
+    static native long readv0(FileDescriptor fd, long address, int len)
+            throws IOException;
 
 }

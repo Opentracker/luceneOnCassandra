@@ -8,6 +8,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.ScatteringByteChannel;
 import java.nio.channels.WritableByteChannel;
 
 import org.apache.lucene.cassandra.FileDescriptor;
@@ -105,11 +106,43 @@ public class FileChannelImpl extends FileChannel {
         }
     }
 
+    /**
+     * Reads a sequence of bytes from this channel into a subsequence of the
+     * given buffers.
+     *
+     * <p> Bytes are read starting at this channel's current file position, and
+     * then the file position is updated with the number of bytes actually
+     * read.  Otherwise this method behaves exactly as specified in the {@link
+     * ScatteringByteChannel} interface.  </p>
+     */
     @Override
     public long read(ByteBuffer[] dsts, int offset, int length)
             throws IOException {
-        // TODO implement
-        return 0;
+        if ((offset < 0) || (length < 0) || (offset > dsts.length - length))
+            throw new IndexOutOfBoundsException();
+        ensureOpen();
+        if (!readable)
+            throw new NonReadableChannelException();
+        synchronized (positionLock) {
+          long n = 0;
+          int ti = -1;
+          Object traceContext = IoTrace.fileReadBegin(path);
+          try {
+              begin();
+              ti = threads.add();
+              if (!isOpen())
+                  return 0;
+              do {
+                  n = IOUtil.read(fd, dsts, offset, length, nd);
+              } while ((n == IOStatus.INTERRUPTED) && isOpen());
+              return IOStatus.normalize(n);
+          } finally {
+              threads.remove(ti);
+              IoTrace.fileReadEnd(traceContext, n > 0 ? n : 0);
+              end(n > 0);
+              assert IOStatus.check(n);
+          }
+        }
     }
 
     @Override

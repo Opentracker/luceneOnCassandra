@@ -7,6 +7,7 @@ import org.apache.lucene.cassandra.FileDescriptor;
 
 import sun.nio.ch.DirectBuffer;
 
+// http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/7u40-b43/sun/nio/ch/NativeDispatcher.java#NativeDispatcher
 abstract class NativeDispatcher {
     
     abstract int read(FileDescriptor fd, long address, int len)
@@ -143,11 +144,16 @@ abstract class NativeDispatcher {
             throw new IOException("Operation Unsupported");
     }
     
+    abstract long readv(FileDescriptor fd, long address, int len)
+            throws IOException;
+    
     /**
      * Frees the memory for the given direct buffer
      */
     private static void free(ByteBuffer buf) {
         ((DirectBuffer)buf).cleaner().clean();
     }
+    
+
 
 }

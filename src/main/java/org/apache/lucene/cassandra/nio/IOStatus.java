@@ -22,5 +22,15 @@ final class IOStatus {
     static boolean check(int n) {
         return (n >= UNAVAILABLE);
     }
+    
+    static long normalize(long n) {
+        if (n == UNAVAILABLE)
+            return 0;
+        return n;
+    }
+    
+    static boolean check(long n) {
+        return (n >= UNAVAILABLE);
+    }
 
 }

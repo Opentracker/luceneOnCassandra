@@ -2,8 +2,10 @@ package org.apache.lucene.cassandra.nio;
 
 import java.nio.ByteBuffer;
 
+import sun.misc.Unsafe;
 import sun.nio.ch.DirectBuffer;
 
+// http://grepcode.com/file_/repository.grepcode.com/java/root/jdk/openjdk/7u40-b43/sun/nio/ch/Util.java/
 class Util {
     
     // -- Caches --
@@ -140,6 +142,21 @@ class Util {
     }
     
     /**
+     * Releases a temporary buffer by returning to the cache or freeing it. If
+     * returning to the cache then insert it at the end. This makes it
+     * suitable for scatter/gather operations where the buffers are returned to
+     * cache in same order that they were obtained.
+     */
+    static void offerLastTemporaryDirectBuffer(ByteBuffer buf) {
+        assert buf != null;
+        BufferCache cache = bufferCache.get();
+        if (!cache.offerLast(buf)) {
+            // cache is full
+            free(buf);
+        }
+    }
+    
+    /**
      * Frees the memory for the given direct buffer
      */
     private static void free(ByteBuffer buf) {
@@ -159,6 +176,14 @@ class Util {
             free(buf);
         }
         
+    }
+    
+    // -- Unsafe access --
+
+    private static Unsafe unsafe = Unsafe.getUnsafe();
+    
+    static Unsafe unsafe() {
+        return unsafe;
     }
 
     // -- Initialization --
