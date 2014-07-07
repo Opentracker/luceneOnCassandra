@@ -68,4 +68,18 @@ class FileDispatcherImpl extends FileDispatcher {
     static native long readv0(FileDescriptor fd, long address, int len)
             throws IOException;
 
+    int write(FileDescriptor fd, long address, int len) throws IOException {
+        return write0(fd, address, len, append);
+    }
+    
+    static native int write0(FileDescriptor fd, long address, int len, boolean append)
+            throws IOException;
+    
+    long writev(FileDescriptor fd, long address, int len) throws IOException {
+        return writev0(fd, address, len, append);
+    }
+    
+    static native long writev0(FileDescriptor fd, long address, int len, boolean append)
+            throws IOException;
+
 }

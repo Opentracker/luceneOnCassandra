@@ -13,6 +13,14 @@ abstract class NativeDispatcher {
     abstract int read(FileDescriptor fd, long address, int len)
             throws IOException;
     
+    /**
+     * Returns {@code true} if pread/pwrite needs to be synchronized with
+     * position sensitive methods.
+     */
+    boolean needsPositionLock() {
+        return false;
+    }
+    
     // The number of temp buffers in our pool
     private static final int TEMP_BUF_POOL_SIZE = IOUtil.IOV_MAX;
 
@@ -145,6 +153,17 @@ abstract class NativeDispatcher {
     }
     
     abstract long readv(FileDescriptor fd, long address, int len)
+            throws IOException;
+    
+    abstract int write(FileDescriptor fd, long address, int len)
+            throws IOException;
+    
+    int pwrite(FileDescriptor fd, long address, int len, long position)
+            throws IOException {
+        throw new IOException("Operation Unsupported");
+    }
+    
+    abstract long writev(FileDescriptor fd, long address, int len)
             throws IOException;
     
     /**

@@ -3,10 +3,14 @@ package org.apache.lucene.cassandra.nio;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
+import java.nio.channels.AsynchronousCloseException;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.NonReadableChannelException;
+import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 import java.nio.channels.WritableByteChannel;
@@ -15,6 +19,7 @@ import org.apache.lucene.cassandra.FileDescriptor;
 
 import sun.misc.IoTrace;
 
+// http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/7u40-b43/sun/nio/ch/FileChannelImpl.java#FileChannelImpl
 public class FileChannelImpl extends FileChannel {
     
     // Memory allocation size for mapping buffers
@@ -145,17 +150,84 @@ public class FileChannelImpl extends FileChannel {
         }
     }
 
+    /**
+     * Writes a sequence of bytes to this channel from the given buffer.
+     *
+     * <p> Bytes are written starting at this channel's current file position
+     * unless the channel is in append mode, in which case the position is
+     * first advanced to the end of the file.  The file is grown, if necessary,
+     * to accommodate the written bytes, and then the file position is updated
+     * with the number of bytes actually written.  Otherwise this method
+     * behaves exactly as specified by the {@link WritableByteChannel}
+     * interface. </p>
+     */
     @Override
     public int write(ByteBuffer src) throws IOException {
-        // TODO implement
-        return 0;
+        ensureOpen();
+        if (!writable)
+            throw new NonWritableChannelException();
+        synchronized (positionLock) {
+            int n = 0;
+            int ti = -1;
+            Object traceContext = IoTrace.fileWriteBegin(path);
+            try {
+                begin();
+                ti = threads.add();
+                if (!isOpen())
+                    return 0;
+                do {
+                    n = IOUtil.write(fd, src, -1, nd);
+                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                return IOStatus.normalize(n);
+            } finally {
+                threads.remove(ti);
+                end(n > 0);
+                IoTrace.fileWriteEnd(traceContext, n > 0 ? n : 0);
+                assert IOStatus.check(n);
+            }
+        }
     }
 
+    /**
+     * Writes a sequence of bytes to this channel from a subsequence of the
+     * given buffers.
+     *
+     * <p> Bytes are written starting at this channel's current file position
+     * unless the channel is in append mode, in which case the position is
+     * first advanced to the end of the file.  The file is grown, if necessary,
+     * to accommodate the written bytes, and then the file position is updated
+     * with the number of bytes actually written.  Otherwise this method
+     * behaves exactly as specified in the {@link GatheringByteChannel}
+     * interface.  </p>
+     */
     @Override
     public long write(ByteBuffer[] srcs, int offset, int length)
             throws IOException {
-        // TODO implement
-        return 0;
+        if ((offset < 0) || (length < 0) || (offset > srcs.length - length))
+            throw new IndexOutOfBoundsException();
+        ensureOpen();
+        if (!writable)
+            throw new NonWritableChannelException();
+        synchronized (positionLock) {
+            long n = 0;
+            int ti = -1;
+            Object traceContext = IoTrace.fileWriteBegin(path);
+            try {
+                begin();
+                ti = threads.add();
+                if (!isOpen())
+                    return 0;
+                do {
+                    n = IOUtil.write(fd, srcs, offset, length, nd);
+                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                return IOStatus.normalize(n);
+            } finally {
+                threads.remove(ti);
+                IoTrace.fileWriteEnd(traceContext, n > 0 ? n : 0);
+                end(n > 0);
+                assert IOStatus.check(n);
+            }
+        }
     }
 
     @Override
@@ -208,10 +280,87 @@ public class FileChannelImpl extends FileChannel {
         return 0;
     }
 
+    /**
+     * Writes a sequence of bytes to this channel from the given buffer,
+     * starting at the given file position.
+     *
+     * <p> This method works in the same manner as the {@link
+     * #write(ByteBuffer)} method, except that bytes are written starting at
+     * the given file position rather than at the channel's current position.
+     * This method does not modify this channel's position.  If the given
+     * position is greater than the file's current size then the file will be
+     * grown to accommodate the new bytes; the values of any bytes between the
+     * previous end-of-file and the newly-written bytes are unspecified.  </p>
+     *
+     * @param  src
+     *         The buffer from which bytes are to be transferred
+     *
+     * @param  position
+     *         The file position at which the transfer is to begin;
+     *         must be non-negative
+     *
+     * @return  The number of bytes written, possibly zero
+     *
+     * @throws  IllegalArgumentException
+     *          If the position is negative
+     *
+     * @throws  NonWritableChannelException
+     *          If this channel was not opened for writing
+     *
+     * @throws  ClosedChannelException
+     *          If this channel is closed
+     *
+     * @throws  AsynchronousCloseException
+     *          If another thread closes this channel
+     *          while the write operation is in progress
+     *
+     * @throws  ClosedByInterruptException
+     *          If another thread interrupts the current thread
+     *          while the write operation is in progress, thereby
+     *          closing the channel and setting the current thread's
+     *          interrupt status
+     *
+     * @throws  IOException
+     *          If some other I/O error occurs
+     */
     @Override
     public int write(ByteBuffer src, long position) throws IOException {
-        // TODO implement
-        return 0;
+        if (src == null)
+            throw new NullPointerException();
+        if (position < 0)
+            throw new IllegalArgumentException("Negative position");
+        if (!writable)
+            throw new NonWritableChannelException();
+        ensureOpen();
+        if (nd.needsPositionLock()) {
+            synchronized (positionLock) {
+                return writeInternal(src, position);
+            }
+        } else {
+            return writeInternal(src, position);
+        }
+    }
+    
+    private int writeInternal(ByteBuffer src, long position) throws IOException {
+        assert !nd.needsPositionLock() || Thread.holdsLock(positionLock);
+        int n = 0;
+        int ti = -1;
+        Object traceContext = IoTrace.fileWriteBegin(path);
+        try {
+            begin();
+            ti = threads.add();
+            if (!isOpen())
+                return -1;
+            do {
+                n = IOUtil.write(fd, src, position, nd);
+            } while ((n == IOStatus.INTERRUPTED) && isOpen());
+            return IOStatus.normalize(n);
+        } finally {
+            threads.remove(ti);
+            end(n > 0);
+            IoTrace.fileWriteEnd(traceContext, n > 0 ? n : 0);
+            assert IOStatus.check(n);
+        }
     }
 
     @Override
