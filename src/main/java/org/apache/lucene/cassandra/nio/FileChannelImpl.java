@@ -254,10 +254,27 @@ public class FileChannelImpl extends FileChannel {
         return null;
     }
 
+    /**
+     * @see FileChannel#force(boolean)
+     */
     @Override
     public void force(boolean metaData) throws IOException {
-        // TODO implement
-        
+        ensureOpen();
+        int rv = -1;
+        int ti = -1;
+        try {
+            begin();
+            ti = threads.add();
+            if (!isOpen())
+                return;
+            do {
+                rv = nd.force(fd, metaData);
+            } while ((rv == IOStatus.INTERRUPTED) && isOpen());
+        } finally {
+            threads.remove(ti);
+            end(rv > -1);
+            assert IOStatus.check(rv);
+        }
     }
 
     @Override
