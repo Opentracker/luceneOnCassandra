@@ -274,10 +274,87 @@ public class FileChannelImpl extends FileChannel {
         return 0;
     }
 
+    /**
+     * Reads a sequence of bytes from this channel into the given buffer,
+     * starting at the given file position.
+     *
+     * <p> This method works in the same manner as the {@link
+     * #read(ByteBuffer)} method, except that bytes are read starting at the
+     * given file position rather than at the channel's current position.  This
+     * method does not modify this channel's position.  If the given position
+     * is greater than the file's current size then no bytes are read.  </p>
+     *
+     * @param  dst
+     *         The buffer into which bytes are to be transferred
+     *
+     * @param  position
+     *         The file position at which the transfer is to begin;
+     *         must be non-negative
+     *
+     * @return  The number of bytes read, possibly zero, or <tt>-1</tt> if the
+     *          given position is greater than or equal to the file's current
+     *          size
+     *
+     * @throws  IllegalArgumentException
+     *          If the position is negative
+     *
+     * @throws  NonReadableChannelException
+     *          If this channel was not opened for reading
+     *
+     * @throws  ClosedChannelException
+     *          If this channel is closed
+     *
+     * @throws  AsynchronousCloseException
+     *          If another thread closes this channel
+     *          while the read operation is in progress
+     *
+     * @throws  ClosedByInterruptException
+     *          If another thread interrupts the current thread
+     *          while the read operation is in progress, thereby
+     *          closing the channel and setting the current thread's
+     *          interrupt status
+     *
+     * @throws  IOException
+     *          If some other I/O error occurs
+     */
     @Override
     public int read(ByteBuffer dst, long position) throws IOException {
-        // TODO implement
-        return 0;
+        if (dst == null)
+            throw new NullPointerException();
+        if (position < 0)
+            throw new IllegalArgumentException("Negative position");
+        if (!readable)
+            throw new NonReadableChannelException();
+        ensureOpen();
+        if (nd.needsPositionLock()) {
+            synchronized (positionLock) {
+                return readInternal(dst, position);
+            }
+        } else {
+            return readInternal(dst, position);
+        }
+    }
+    
+    private int readInternal(ByteBuffer dst, long position) throws IOException {
+        assert !nd.needsPositionLock() || Thread.holdsLock(positionLock);
+        int n = 0;
+        int ti = -1;
+        Object traceContext = IoTrace.fileReadBegin(path);
+        try {
+            begin();
+            ti = threads.add();
+            if (!isOpen())
+                return -1;
+            do {
+                n = IOUtil.read(fd, dst, position, nd);
+            } while ((n == IOStatus.INTERRUPTED) && isOpen());
+            return IOStatus.normalize(n);
+        } finally {
+            threads.remove(ti);
+            IoTrace.fileReadEnd(traceContext, n > 0 ? n : 0);
+            end(n > 0);
+            assert IOStatus.check(n);
+        }
     }
 
     /**
