@@ -408,5 +408,7 @@ public interface File {
     public File getParentFile();
 
     public boolean canRead();
+    
+    boolean isInvalid();
 
 }
