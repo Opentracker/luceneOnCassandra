@@ -1109,6 +1109,13 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
     public boolean canRead() {
         return true;
     }
+    
+    public boolean isInvalid() {
+        if (fd == null) {
+            return true;
+        }
+        return false;
+    }
 
     @Override
     public FileSystem getFileSystem() {

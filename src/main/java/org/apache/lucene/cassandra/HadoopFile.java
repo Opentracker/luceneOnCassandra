@@ -424,5 +424,10 @@ public class HadoopFile implements File, Serializable {
      // TODO Implement this.
         return false;
     }
+    
+    public boolean isInvalid() {
+        // TODO Implement this.
+        return false;
+    }
 
 }

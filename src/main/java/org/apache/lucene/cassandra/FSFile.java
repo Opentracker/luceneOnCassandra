@@ -266,6 +266,11 @@ public class FSFile implements File, Serializable {
         return false;
     }
     
+    public boolean isInvalid() {
+        // TODO
+        return false;
+    }
+    
     public String getName() {
         return thePrivateFile.getName();
     }
