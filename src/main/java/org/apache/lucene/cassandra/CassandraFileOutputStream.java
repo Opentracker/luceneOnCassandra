@@ -7,6 +7,8 @@ import java.nio.channels.FileChannel;
 
 import org.apache.lucene.cassandra.nio.FileChannelImpl;
 
+import sun.misc.IoTrace;
+
 /**
  * A file output stream is an output stream for writing data to a
  * <code>File</code> or to a <code>FileDescriptor</code>. Whether or not
@@ -23,6 +25,26 @@ import org.apache.lucene.cassandra.nio.FileChannelImpl;
  * TODO
  */
 public class CassandraFileOutputStream extends OutputStream {
+    
+    /**
+     * The system dependent file descriptor.
+     */
+    private final FileDescriptor fd;
+    
+    /**
+     * True if the file is opened for append.
+     */
+    private final boolean append;
+    
+    /**
+     * The path of the referenced file (null if the stream is created with a file descriptor)
+     */
+    private final String path;
+    
+    private final Object closeLock = new Object();
+    private volatile boolean closed = false;
+    
+    private final File file;
     
     
     /**
@@ -78,19 +100,17 @@ public class CassandraFileOutputStream extends OutputStream {
      * @exception  SecurityException  if a security manager exists and its
      *               <code>checkWrite</code> method denies write access
      *               to the file.
-     * @see        java.io.File#getPath()
      * @see        java.lang.SecurityException
      * @see        java.lang.SecurityManager#checkWrite(java.lang.String)
-     * @since 1.4
      */
     public CassandraFileOutputStream(File file, boolean append)
         throws FileNotFoundException
     {
         String name = (file != null ? file.getPath() : null);
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkWrite(name);
-        }
+        //SecurityManager security = System.getSecurityManager();
+        //if (security != null) {
+            //security.checkWrite(name);
+        //}
         if (name == null) {
             throw new NullPointerException();
         }
@@ -98,22 +118,64 @@ public class CassandraFileOutputStream extends OutputStream {
             throw new FileNotFoundException("Invalid file path");
         }
         //this.fd = new FileDescriptor();
-        //this.append = append;
-        //this.path = name;
+        this.file = file;
+        this.append = append;
+        if (this.append) {
+            System.out.println("existing fd " + this.append);
+            this.fd = file.getFileDescriptor();
+        } else {
+            System.out.println("new fd " + this.append);
+            this.fd = new FileDescriptor(name, 16384);
+        }
+        this.path = name;
         //fd.incrementAndGetUseCount();
         //open(name, append);
     }
+    
+    /**
+     * Opens a file, with the specified name, for overwriting or appending.
+     * @param name name of file to be opened
+     * @param append whether the file is to be opened in append mode
+     */
+    //private native void open(String name, boolean append)
+    //    throws FileNotFoundException;
     
     /**
      * The associated channel, initalized lazily.
      */
     private FileChannel channel;
 
+    /**
+     * Writes the specified byte to this file output stream. Implements
+     * the <code>write</code> method of <code>OutputStream</code>.
+     *
+     * @param      b   the byte to be written.
+     * @exception  IOException  if an I/O error occurs.
+     */
     @Override
     public void write(int b) throws IOException {
-        // TODO Auto-generated method stub
-
+        // fileWriteBegin always return null? http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/7u40-b43/sun/misc/IoTrace.java
+        Object traceContext = IoTrace.fileWriteBegin(path); 
+        int bytesWritten = 0;
+        try {
+            file.write(b, append);
+            bytesWritten = 1;
+        } finally {
+            // fileWriteEnd always return ? http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/7u40-b43/sun/misc/IoTrace.java
+            IoTrace.fileWriteEnd(traceContext, bytesWritten);
+        }
     }
+    
+    /**
+     * Writes the specified byte to this file output stream.
+     *
+     * @param   b   the byte to be written.
+     * @param   append   {@code true} if the write operation first
+     *     advances the position to the end of file
+     */
+    //private void write(int b, boolean append) throws IOException {
+        
+    //}
     
     /**
      * Returns the unique {@link java.nio.channels.FileChannel FileChannel}
@@ -133,7 +195,7 @@ public class CassandraFileOutputStream extends OutputStream {
     public FileChannel getChannel() {
         synchronized (this) {
             if (channel == null) {
-                //channel = FileChannelImpl.open(fd, path, false, true, append, this);
+                channel = FileChannelImpl.open(fd, path, false, true, append, this);
 
                 /*
                  * Increment fd's use count. Invoking the channel's close()
@@ -158,24 +220,22 @@ public class CassandraFileOutputStream extends OutputStream {
      *
      */
     public void close() throws IOException {
-        /*
         synchronized (closeLock) {
             if (closed) {
                 return;
             }
             closed = true;
         }
-        */
 
-        //if (channel != null) {
+        if (channel != null) {
             /*
              * Decrement FD use count associated with the channel
              * The use count is incremented whenever a new channel
              * is obtained from this stream.
              */
-          //  fd.decrementAndGetUseCount();
-//            channel.close();
-        //}
+            //  fd.decrementAndGetUseCount();
+            channel.close();
+        }
 
         /*
          * Decrement FD use count associated with this stream
