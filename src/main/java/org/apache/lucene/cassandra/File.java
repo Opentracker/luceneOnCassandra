@@ -410,5 +410,31 @@ public interface File {
     public boolean canRead();
     
     boolean isInvalid();
+    
+    public FileDescriptor getFileDescriptor();
+    
+    /**
+     * Writes the specified byte to this output stream. The general
+     * contract for <code>write</code> is that one byte is written
+     * to the output stream. The byte to be written is the eight
+     * low-order bits of the argument <code>b</code>. The 24
+     * high-order bits of <code>b</code> are ignored.
+     * 
+     * it means that b is a 32 bit type, while bytes are only 8 bits. so it uses the 
+     * lowest 8 bits
+     * if this is the representation of b in binary, only the ones set to 1 are written:
+     * 00000000000000000000000011111111
+     * 
+     * lowest 8 bit to the right , get written.
+     * <p>
+     * 
+     * Use by {@link CassandraFileOutputStream}
+     *
+     * @param      b   the <code>byte</code>.
+     * @exception  IOException  if an I/O error occurs. In particular,
+     *             an <code>IOException</code> may be thrown if the
+     *             output stream has been closed.
+     */
+    public void write(int b, boolean append)  throws IOException;
 
 }
