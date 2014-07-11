@@ -271,6 +271,15 @@ public class FSFile implements File, Serializable {
         return false;
     }
     
+    public FileDescriptor getFileDescriptor() {
+        // TODO
+        return null;
+    }
+    
+    public void write(int b, boolean append)  throws IOException {
+        // TODO
+    }
+    
     public String getName() {
         return thePrivateFile.getName();
     }

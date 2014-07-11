@@ -429,5 +429,15 @@ public class HadoopFile implements File, Serializable {
         // TODO Implement this.
         return false;
     }
+    
+    public FileDescriptor getFileDescriptor() {
+        // TODO
+        return null;
+    }
+    
+    public void write(int b, boolean append)  throws IOException {
+        // TODO
+    }
+    
 
 }
