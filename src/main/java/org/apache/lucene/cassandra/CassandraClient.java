@@ -150,6 +150,38 @@ public class CassandraClient {
     }
 
     /**
+     * Get all the columns which belong to the key.
+     *
+     * @param key
+     *            the row key.
+     *
+     * @return all the columns belong to the key.
+     *
+     * @throws IOException
+     */
+    public Map<byte[], byte[]> getColumns(byte[] key) throws IOException {
+        try {
+            SliceRange sliceRange = new SliceRange();
+            sliceRange.setStart(new byte[0]);
+            sliceRange.setFinish(new byte[0]);
+            List<ColumnOrSuperColumn> coscs =
+                    thriftClient.get_slice(ByteBuffer.wrap(key),
+                            new ColumnParent(columnFamily),
+                            new SlicePredicate().setSlice_range(sliceRange),
+                            ConsistencyLevel.ALL);
+            Map<byte[], byte[]> columns = new HashMap<byte[], byte[]>();
+            for (ColumnOrSuperColumn cosc : coscs) {
+                Column column = cosc.getColumn();
+                columns.put(column.getName(), column.getValue());
+            }
+            return columns;
+        } catch (Exception e) {
+            throw new IOException("Could not read from columns for file "
+                    + Util.hexToAscii(Util.bytesToHex(key)), e);
+        }
+    }
+
+    /**
      * Get the given set of columns for the row specified by the given key.
      * 
      * populate columnname and column value based on the key and column name
