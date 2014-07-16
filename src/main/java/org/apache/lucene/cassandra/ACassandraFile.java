@@ -1125,11 +1125,11 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
     
     /**
      * TODO, 
-     * append and create/overwrite
-     * check file output of FileOutputStream.write() and ACassandraFile.write() in cassandra.
      * after method write() is performed, check back read() and see before and after , the content is equal.
      * move method intToBytes to Util or make it private?
      * when append mode, does the file descriptor length tally with the total blocks content?
+     * when append a few times, the length of files become incorrect.
+     * data stored is in byte, the existing write is in hex?
      * 
      */
     public void write(int b, boolean append)  throws IOException {
@@ -1140,131 +1140,252 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         BlockMap blocksToFlush = new BlockMap();
         
         int off = 0;
-        byte[] src = intToBytes(b);
+        byte[] src = {(byte)b};
         
-        if (currentBlock.getDataPosition() > 0) {
-            logger.trace("creating prefragment");
-            FileBlock preFragment = (FileBlock) currentBlock.clone();
-            preFragment.setDataLength(currentBlock.getDataPosition());
-            fd.insertBlock(currentBlock, preFragment, false);
-        }
+        if (append) {
+            if (currentBlock.getDataPosition() > 0) {
+                logger.trace("creating prefragment");
+                FileBlock preFragment = (FileBlock) currentBlock.clone();
+                preFragment.setDataLength(currentBlock.getDataPosition());
+                fd.insertBlock(currentBlock, preFragment, false);
+            }
 
-        int bytesLeftToWrite = src.length;
-        int bytesAddedByWrite = 0;
+            int bytesLeftToWrite = src.length;
+            int bytesAddedByWrite = 0;
 
-        do {
+            do {
+                maybeRepositionCurrentBlock();
+                // minimum of data to copy into cassandra.
+                int dataLength = (int) Math.min(currentBlock.getBlockSize() - currentBlock.getPositionOffset(), bytesLeftToWrite);
+                // current file block data length.
+                int currentLength = currentBlock.getDataLength();
+                FileBlock nextBlock;
+                if (currentBlock.getDataPosition() == 0 && dataLength > currentBlock.getDataLength()) {
+                    // no need create a new block
+                    nextBlock = currentBlock;
+                    nextBlock.setDataLength(dataLength);
+                    debug = String.format("1 setting block %s for file %s with dataoffset %s",
+                                    currentBlock.getBlockName(), name,
+                                    currentBlock.getPositionOffset());
+                    logger.trace(debug);
+                } else {
+                    // create a new block
+                    nextBlock = fd.createBlock();
+                    nextBlock.setDataLength(dataLength);
+                    nextBlock.setDataOffset(currentBlock.getPositionOffset());
+                    debug =
+                            String.format(
+                                    "1 setting block %s for file %s with dataoffset %s",
+                                    currentBlock.getBlockName(), name,
+                                    currentBlock.getPositionOffset());
+                    logger.trace(debug);
+                }
+
+                byte[] partialBytes = new byte[dataLength];
+                System.arraycopy(src, off, partialBytes, 0, dataLength);
+                blocksToFlush.put(nextBlock.getBlockName(), partialBytes);
+                logger.trace("added block {} with length {} to flush ",
+                        nextBlock.getBlockName(), partialBytes.length);
+                nextBlock.setDataPosition(dataLength);
+                if (nextBlock != currentBlock) {
+                    FileBlock blockToBeRemoved;
+                    if (nextBlock.getDataPosition() > 0) {
+                        blockToBeRemoved = currentBlock;
+                        // add nextBlock into a position of the currentblock + 1.
+                        // if currentblock position is 5, so nextblock position is 6
+                        fd.insertBlock(currentBlock, nextBlock, true);
+                    } else {
+                        // add nextBlock into a position of the currentblock - 1.
+                        // if currentblock position is 5, so nextblock position is 4
+                        blockToBeRemoved = currentBlock;
+                        fd.insertBlock(currentBlock, nextBlock, false);
+                    }
+                    for (; blockToBeRemoved != null
+                            && blockToBeRemoved.getLastDataOffset() < nextBlock
+                                    .getLastDataOffset(); blockToBeRemoved =
+                            fd.getNextBlock(blockToBeRemoved)) {
+                        fd.removeBlock(blockToBeRemoved);
+                    }
+                }
+                bytesLeftToWrite -= dataLength;
+                off += dataLength;
+                if (fd.isLastBlock(nextBlock)) {
+                    if (nextBlock != currentBlock) {
+                        bytesAddedByWrite += dataLength;
+                    } else {
+                        bytesAddedByWrite += dataLength - currentLength;
+                    }
+                }
+                currentBlock = nextBlock;
+            } while (bytesLeftToWrite > 0);
+
+            if (currentBlock.getDataPosition() < currentBlock.getDataLength()) {
+                FileBlock postFragment = (FileBlock) currentBlock.clone();
+                postFragment.setDataOffset(currentBlock.getPositionOffset());
+                debug =
+                        String.format(
+                                "2 setting block %s for file %s with dataoffset %s",
+                                currentBlock.getBlockName(), name,
+                                currentBlock.getPositionOffset());
+                logger.trace(debug);
+                postFragment
+                        .setDataLength((int) (currentBlock.getDataLength() - postFragment
+                                .getDataOffset()));
+
+                fd.insertBlock(currentBlock, postFragment, true);
+                currentBlock = postFragment;
+                currentBlock.setBlockOffset(currentBlock.getBlockOffset()
+                        + currentBlock.getDataPosition());
+                currentBlock.setDataPosition(0);
+            }
+
             maybeRepositionCurrentBlock();
-            // minimum of data to copy into cassandra.
-            int dataLength =
-                    (int) Math.min(
-                            currentBlock.getBlockSize()
-                                    - currentBlock.getPositionOffset(),
-                            bytesLeftToWrite);
-            // current file block data length.
-            int currentLength = currentBlock.getDataLength();
-            FileBlock nextBlock;
-            if (currentBlock.getDataPosition() == 0
-                    && dataLength > currentBlock.getDataLength()) {
-                // no need create a new block
-                nextBlock = currentBlock;
-                nextBlock.setDataLength(dataLength);
-                debug =
-                        String.format(
-                                "1 setting block %s for file %s with dataoffset %s",
-                                currentBlock.getBlockName(), name,
-                                currentBlock.getPositionOffset());
-                logger.trace(debug);
-            } else {
-                // create a new block
-                nextBlock = fd.createBlock();
-                nextBlock.setDataLength(dataLength);
-                nextBlock.setDataOffset(currentBlock.getPositionOffset());
-                debug =
-                        String.format(
-                                "1 setting block %s for file %s with dataoffset %s",
-                                currentBlock.getBlockName(), name,
-                                currentBlock.getPositionOffset());
-                logger.trace(debug);
+
+            long now = new java.util.Date().getTime();
+            if (bytesAddedByWrite > 0) {
+                fd.setLength(fd.getLength() + bytesAddedByWrite);
+            }
+            fd.setLastAccessed(now);
+            fd.setLastModified(now);
+            logger.trace("file descriptor {}", FileDescriptorUtils.toString(fd));
+            logger.trace("blocksToFlush size {}", blocksToFlush.size());
+            if (blocksToFlush.size() > 1) {
+                for (Entry<byte[], byte[]> entry : blocksToFlush.entrySet()) {
+                    logger.trace("flushing block {} ", new String(entry.getKey()));
+                }
+            }
+            columnOrientedFile.writeFileBlocks(fd, blocksToFlush);
+            if (bytesLeftToWrite > 0) {
+                logger.error("did not write fully as expected, remaining {}",
+                        bytesLeftToWrite);
             }
             
-            byte[] partialBytes = new byte[dataLength];
-            System.arraycopy(src, off, partialBytes, 0, dataLength);
-            blocksToFlush.put(nextBlock.getBlockName(), partialBytes);
-            logger.trace("added block {} with length {} to flush ",
-                    nextBlock.getBlockName(), partialBytes.length);
-            nextBlock.setDataPosition(dataLength);
-            if (nextBlock != currentBlock) {
-                FileBlock blockToBeRemoved;
-                if (nextBlock.getDataPosition() > 0) {
-                    blockToBeRemoved = currentBlock;
-                    // add nextBlock into a position of the currentblock + 1.
-                    // if currentblock position is 5, so nextblock position is 6
-                    fd.insertBlock(currentBlock, nextBlock, true);
-                } else {
-                    // add nextBlock into a position of the currentblock - 1.
-                    // if currentblock position is 5, so nextblock position is 4
-                    blockToBeRemoved = currentBlock;
-                    fd.insertBlock(currentBlock, nextBlock, false);
-                }
-                for (; blockToBeRemoved != null
-                        && blockToBeRemoved.getLastDataOffset() < nextBlock
-                                .getLastDataOffset(); blockToBeRemoved =
-                        fd.getNextBlock(blockToBeRemoved)) {
-                    fd.removeBlock(blockToBeRemoved);
-                }
+        } else {
+            this.columnOrientedFile.deleteFileBlocks(fd, false);
+            this.fd = this.columnOrientedDirectory.resetFileDescriptor(name);
+
+            currentBlock = fd.getFirstBlock();
+            
+            if (currentBlock.getDataPosition() > 0) {
+                logger.trace("creating prefragment");
+                FileBlock preFragment = (FileBlock) currentBlock.clone();
+                preFragment.setDataLength(currentBlock.getDataPosition());
+                fd.insertBlock(currentBlock, preFragment, false);
             }
-            bytesLeftToWrite -= dataLength;
-            off += dataLength;
-            if (fd.isLastBlock(nextBlock)) {
+
+            int bytesLeftToWrite = src.length;
+            int bytesAddedByWrite = 0;
+            
+            do {
+                maybeRepositionCurrentBlock();
+                // minimum of data to copy into cassandra.
+                int dataLength = (int) Math.min(currentBlock.getBlockSize() - currentBlock.getPositionOffset(), bytesLeftToWrite);
+                // current file block data length.
+                int currentLength = currentBlock.getDataLength();
+                FileBlock nextBlock;
+                if (currentBlock.getDataPosition() == 0 && dataLength > currentBlock.getDataLength()) {
+                    // no need create a new block
+                    nextBlock = currentBlock;
+                    nextBlock.setDataLength(dataLength);
+                    debug = String.format("1 setting block %s for file %s with dataoffset %s",
+                                    currentBlock.getBlockName(), name,
+                                    currentBlock.getPositionOffset());
+                    logger.trace(debug);
+                } else {
+                    // create a new block
+                    nextBlock = fd.createBlock();
+                    nextBlock.setDataLength(dataLength);
+                    nextBlock.setDataOffset(currentBlock.getPositionOffset());
+                    debug =
+                            String.format(
+                                    "1 setting block %s for file %s with dataoffset %s",
+                                    currentBlock.getBlockName(), name,
+                                    currentBlock.getPositionOffset());
+                    logger.trace(debug);
+                }
+                
+                byte[] partialBytes = new byte[dataLength];
+                System.arraycopy(src, off, partialBytes, 0, dataLength);
+                blocksToFlush.put(nextBlock.getBlockName(), partialBytes);
+                logger.trace("added block {} with length {} to flush ",
+                        nextBlock.getBlockName(), partialBytes.length);
+                nextBlock.setDataPosition(dataLength);
                 if (nextBlock != currentBlock) {
-                    bytesAddedByWrite += dataLength;
-                } else {
-                    bytesAddedByWrite += dataLength - currentLength;
+                    FileBlock blockToBeRemoved;
+                    if (nextBlock.getDataPosition() > 0) {
+                        blockToBeRemoved = currentBlock;
+                        // add nextBlock into a position of the currentblock + 1.
+                        // if currentblock position is 5, so nextblock position is 6
+                        fd.insertBlock(currentBlock, nextBlock, true);
+                    } else {
+                        // add nextBlock into a position of the currentblock - 1.
+                        // if currentblock position is 5, so nextblock position is 4
+                        blockToBeRemoved = currentBlock;
+                        fd.insertBlock(currentBlock, nextBlock, false);
+                    }
+                    for (; blockToBeRemoved != null
+                            && blockToBeRemoved.getLastDataOffset() < nextBlock
+                                    .getLastDataOffset(); blockToBeRemoved =
+                            fd.getNextBlock(blockToBeRemoved)) {
+                        fd.removeBlock(blockToBeRemoved);
+                    }
+                }
+                bytesLeftToWrite -= dataLength;
+                off += dataLength;
+                if (fd.isLastBlock(nextBlock)) {
+                    if (nextBlock != currentBlock) {
+                        bytesAddedByWrite += dataLength;
+                    } else {
+                        bytesAddedByWrite += dataLength - currentLength;
+                    }
+                }
+                currentBlock = nextBlock;
+            } while (bytesLeftToWrite > 0);
+
+            if (currentBlock.getDataPosition() < currentBlock.getDataLength()) {
+                FileBlock postFragment = (FileBlock) currentBlock.clone();
+                postFragment.setDataOffset(currentBlock.getPositionOffset());
+                debug =
+                        String.format(
+                                "2 setting block %s for file %s with dataoffset %s",
+                                currentBlock.getBlockName(), name,
+                                currentBlock.getPositionOffset());
+                logger.trace(debug);
+                postFragment
+                        .setDataLength((int) (currentBlock.getDataLength() - postFragment
+                                .getDataOffset()));
+
+                fd.insertBlock(currentBlock, postFragment, true);
+                currentBlock = postFragment;
+                currentBlock.setBlockOffset(currentBlock.getBlockOffset()
+                        + currentBlock.getDataPosition());
+                currentBlock.setDataPosition(0);
+            }
+
+            maybeRepositionCurrentBlock();
+
+            long now = new java.util.Date().getTime();
+            if (bytesAddedByWrite > 0) {
+                fd.setLength(fd.getLength() + bytesAddedByWrite);
+            }
+            fd.setLastAccessed(now);
+            fd.setLastModified(now);
+            logger.trace("file descriptor {}", FileDescriptorUtils.toString(fd));
+            logger.trace("blocksToFlush size {}", blocksToFlush.size());
+            if (blocksToFlush.size() > 1) {
+                for (Entry<byte[], byte[]> entry : blocksToFlush.entrySet()) {
+                    logger.trace("flushing block {} ", new String(entry.getKey()));
                 }
             }
-            currentBlock = nextBlock;
-        } while (bytesLeftToWrite > 0);
-
-        if (currentBlock.getDataPosition() < currentBlock.getDataLength()) {
-            FileBlock postFragment = (FileBlock) currentBlock.clone();
-            postFragment.setDataOffset(currentBlock.getPositionOffset());
-            debug =
-                    String.format(
-                            "2 setting block %s for file %s with dataoffset %s",
-                            currentBlock.getBlockName(), name,
-                            currentBlock.getPositionOffset());
-            logger.trace(debug);
-            postFragment
-                    .setDataLength((int) (currentBlock.getDataLength() - postFragment
-                            .getDataOffset()));
-
-            fd.insertBlock(currentBlock, postFragment, true);
-            currentBlock = postFragment;
-            currentBlock.setBlockOffset(currentBlock.getBlockOffset()
-                    + currentBlock.getDataPosition());
-            currentBlock.setDataPosition(0);
-        }
-
-        maybeRepositionCurrentBlock();
-
-        long now = new java.util.Date().getTime();
-        if (bytesAddedByWrite > 0) {
-            fd.setLength(fd.getLength() + bytesAddedByWrite);
-        }
-        fd.setLastAccessed(now);
-        fd.setLastModified(now);
-        logger.trace("file descriptor {}", FileDescriptorUtils.toString(fd));
-        logger.trace("blocksToFlush size {}", blocksToFlush.size());
-        if (blocksToFlush.size() > 1) {
-            for (Entry<byte[], byte[]> entry : blocksToFlush.entrySet()) {
-                logger.trace("flushing block {} ", new String(entry.getKey()));
+            columnOrientedFile.writeFileBlocks(fd, blocksToFlush);
+            if (bytesLeftToWrite > 0) {
+                logger.error("did not write fully as expected, remaining {}",
+                        bytesLeftToWrite);
             }
+            
         }
-        columnOrientedFile.writeFileBlocks(fd, blocksToFlush);
-        if (bytesLeftToWrite > 0) {
-            logger.error("did not write fully as expected, remaining {}",
-                    bytesLeftToWrite);
-        }
+
+
         
     }
     
