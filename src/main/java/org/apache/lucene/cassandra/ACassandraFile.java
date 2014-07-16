@@ -1122,7 +1122,6 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
     
     /**
      * TODO, 
-     * after method write() is performed, check back read() and see before and after , the content is equal.
      * data stored is in byte, the existing write is in hex?
      * 
      */
