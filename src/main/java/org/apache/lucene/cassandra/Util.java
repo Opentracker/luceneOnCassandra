@@ -1,5 +1,11 @@
 package org.apache.lucene.cassandra;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
 public class Util {
     
     final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
@@ -60,6 +66,24 @@ public class Util {
         String abs = file.getAbsolutePath();
         int sep = abs.lastIndexOf("/");
         return abs.substring(0, sep) + "/";
+    }
+    
+    public static byte[] intToBytes(int x) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(bos);
+        out.writeInt(x);
+        out.close();
+        byte[] int_bytes = bos.toByteArray();
+        bos.close();
+        return int_bytes;
+    }
+    
+    public static int bytesToInt(byte[] int_bytes) throws IOException {
+        ByteArrayInputStream bis = new ByteArrayInputStream(int_bytes);
+        DataInputStream ois = new DataInputStream(bis);
+        int my_int = ois.readInt();
+        ois.close();
+        return my_int;
     }
 
 }
