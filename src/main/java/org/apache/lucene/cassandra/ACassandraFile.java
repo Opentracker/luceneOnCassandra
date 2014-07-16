@@ -1,9 +1,6 @@
 package org.apache.lucene.cassandra;
 
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
-import java.io.DataOutputStream;
-import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1126,9 +1123,6 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
     /**
      * TODO, 
      * after method write() is performed, check back read() and see before and after , the content is equal.
-     * move method intToBytes to Util or make it private?
-     * when append mode, does the file descriptor length tally with the total blocks content?
-     * when append a few times, the length of files become incorrect.
      * data stored is in byte, the existing write is in hex?
      * 
      */
@@ -1143,6 +1137,8 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         byte[] src = {(byte)b};
         
         if (append) {
+            currentBlock = fd.getLastBlock();
+            
             if (currentBlock.getDataPosition() > 0) {
                 logger.trace("creating prefragment");
                 FileBlock preFragment = (FileBlock) currentBlock.clone();
@@ -1383,20 +1379,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
                         bytesLeftToWrite);
             }
             
-        }
-
-
-        
-    }
-    
-    private static byte[] intToBytes(int x) throws IOException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        DataOutputStream out = new DataOutputStream(bos);
-        out.writeInt(x);
-        out.close();
-        byte[] int_bytes = bos.toByteArray();
-        bos.close();
-        return int_bytes;
+        }  
     }
 
     @Override
