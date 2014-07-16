@@ -3,8 +3,10 @@ package org.apache.lucene.store;
 import static org.junit.Assert.*;
 
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
 
 import org.apache.lucene.cassandra.ACassandraFile;
+import org.apache.lucene.cassandra.CassandraClient;
 import org.apache.lucene.cassandra.CassandraFileOutputStream;
 import org.apache.lucene.cassandra.File;
 import org.junit.After;
@@ -14,6 +16,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class TestCassandraFileOutputStream {
+    
+    CassandraClient client = null;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -27,10 +31,13 @@ public class TestCassandraFileOutputStream {
 
     @Before
     public void setUp() throws Exception {
+        client = new CassandraClient("localhost", 9160, true, "lucene0", "index0", 16384);
     }
 
     @After
     public void tearDown() throws Exception {
+        client.truncate("index0");
+        client.close();
     }
 
     @Test
@@ -43,9 +50,11 @@ public class TestCassandraFileOutputStream {
             FileChannel fc = cfos.getChannel();
             assertNotNull(fc);
             
+            int v = 65;
+            byte[] expected = { (byte)v };
             cfos.write(65);
-            // TODO, check content
-            
+            byte[] actualValue = client.getColumn("/test/cassandraFileOutputStreamFile/removeMe.txt".getBytes(), "BLOCK-0".getBytes());
+            assertEquals(Arrays.toString(expected), Arrays.toString(actualValue));
             
             cfos.close();
             
@@ -61,31 +70,34 @@ public class TestCassandraFileOutputStream {
     public void testCassandraFileOutputStreamFileAppend() {
         
         try {
-            System.out.println("step 1");
+           
             File file = new ACassandraFile("/test/cassandraFileOutputStreamFile/removeMe.txt");
             CassandraFileOutputStream cfos = new CassandraFileOutputStream(file, true);
-            
-            System.out.println("step 2");
+                       
             FileChannel fc = cfos.getChannel();
             assertNotNull(fc);
             
-            System.out.println("step 3");
             cfos.write(65);
-            // TODO, check content
+            cfos.write(65);
+            cfos.write(65);
             
-            System.out.println("step 4");
+            int v = 65;
+            byte[] expected = { (byte)v };
+            byte[] actualValue = client.getColumn("/test/cassandraFileOutputStreamFile/removeMe.txt".getBytes(), "BLOCK-0".getBytes());
+            assertEquals(Arrays.toString(expected), Arrays.toString(actualValue));
+            
+            actualValue = client.getColumn("/test/cassandraFileOutputStreamFile/removeMe.txt".getBytes(), "BLOCK-1".getBytes());
+            assertEquals(Arrays.toString(expected), Arrays.toString(actualValue));
+            
+            actualValue = client.getColumn("/test/cassandraFileOutputStreamFile/removeMe.txt".getBytes(), "BLOCK-2".getBytes());
+            assertEquals(Arrays.toString(expected), Arrays.toString(actualValue));
+            
             cfos.close();
             
         } catch (Exception e) {
             e.printStackTrace();
             fail("fail is not expected");
         }
-        
     }
-    
-
-
-
-
 
 }
