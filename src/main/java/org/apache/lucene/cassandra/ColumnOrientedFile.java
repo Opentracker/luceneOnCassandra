@@ -3,7 +3,9 @@ package org.apache.lucene.cassandra;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.cassandra.utils.ByteBufferUtil;
@@ -93,6 +95,54 @@ public class ColumnOrientedFile {
         Map<byte[], byte[]> column = new HashMap<byte[], byte[]>();
         column.put(descriptorColumn.getBytes(), FileDescriptorUtils.toBytes(fileDescriptor));
         cassandraClient.setColumns(key, column);
+    }
+
+    /**
+     * Delete file block.
+     *
+     * @param fileDescriptor
+     *            the file descriptor specified which file to remove.
+     *
+     * @param onlyDeleteFileBlocksWithinFileDescriptor
+     *            ' if true, then only delete file blocks specified by this file
+     *            descriptor. if false, it will remove all the file blocks
+     *            except file descriptor.
+     *
+     * @throws IOException
+     */
+    public void deleteFileBlocks(FileDescriptor fileDescriptor,
+            boolean onlyDeleteFileBlocksWithinFileDescriptor)
+            throws IOException {
+
+        if (onlyDeleteFileBlocksWithinFileDescriptor) {
+
+            List<FileBlock> fileBlocks = fileDescriptor.getBlocks();
+
+            for (FileBlock fileBlock : fileBlocks) {
+                Map<byte[], byte[]> column = new HashMap<>();
+                column.put(fileBlock.getBlockName().getBytes(), null);
+                cassandraClient.setColumns(
+                        ByteBufferUtil.bytes(fileDescriptor.getName()), column);
+            }
+
+        } else {
+
+            Map<byte[], byte[]> fileBlocks =
+                    cassandraClient.getColumns(fileDescriptor.getName()
+                            .getBytes());
+
+            for (Entry<byte[], byte[]> fileBlock : fileBlocks.entrySet()) {
+                String fileName = new String(fileBlock.getKey());
+                if (descriptorColumn.equals(fileName)) {
+                    continue;
+                }
+                Map<byte[], byte[]> column = new HashMap<>();
+                column.put(fileBlock.getKey(), null);
+                cassandraClient.setColumns(
+                        ByteBufferUtil.bytes(fileDescriptor.getName()), column);
+            }
+
+        }
     }
 
 }
