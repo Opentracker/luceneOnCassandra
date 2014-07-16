@@ -114,4 +114,25 @@ public class ColumnOrientedDirectory {
         cassandraClient.setColumns(
                 ByteBufferUtil.bytes(fileDescriptor.getName()), blockMap);
     }
+
+    /**
+     * reset the file descriptor.
+     *
+     * @param fileName the filename which its descriptor should be reset.
+     *
+     * @return
+     *
+     * @throws IOException
+     */
+    protected FileDescriptor resetFileDescriptor(String fileName) throws IOException {
+        logger.trace("fileName {}", fileName);
+        if (cassandraClient == null) logger.error("cassandraClient is null");
+        if (fileName == null) {
+            return null;
+        }
+        FileDescriptor fileDescriptor = new FileDescriptor(fileName, blockSize);
+        setFileDescriptor(fileDescriptor);
+        return fileDescriptor;
+    }
+
 }
