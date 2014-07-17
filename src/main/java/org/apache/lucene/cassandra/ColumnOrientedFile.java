@@ -3,6 +3,7 @@ package org.apache.lucene.cassandra;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -142,6 +143,66 @@ public class ColumnOrientedFile {
                         ByteBufferUtil.bytes(fileDescriptor.getName()), column);
             }
 
+        }
+    }
+
+    /**
+     * rename a file by copy as many information as possible from
+     * <code>currentFileDescriptor</code> except filename to
+     * <code>nextFileDescriptor</code>.
+     * 
+     * @param currentFileDescriptor
+     *            the current file descriptor which is about to rename.
+     * 
+     * @param nextFileDescriptor
+     *            the next file descriptor which is about to copy to.
+     * 
+     * @return true if the rename process is success.
+     * 
+     * @throws IOException
+     *             any exception during this rename process.
+     */
+    public boolean renameFile(FileDescriptor currentFileDescriptor,
+            FileDescriptor nextFileDescriptor) throws IOException {
+
+        try {
+
+            // get all data
+            List<FileBlock> blocks = currentFileDescriptor.getBlocks();
+            long blockSize = currentFileDescriptor.getBlockSize();
+            long lastAccessed = currentFileDescriptor.getLastAccessed();
+            long lastModified = currentFileDescriptor.getLastModified();
+            long length = currentFileDescriptor.getLength();
+            boolean isDeleted = currentFileDescriptor.isDeleted();
+
+            Set<byte[]> columnNames = new HashSet<byte[]>();
+            for (FileBlock block : blocks) {
+                columnNames.add(block.getBlockName().getBytes());
+            }
+
+            BlockMap currentFileBlocks =
+                    readFileBlocks(currentFileDescriptor, columnNames);
+
+            // copy to another new rowkey
+            nextFileDescriptor.setBlockSize(blockSize);
+            nextFileDescriptor.setLastAccessed(lastAccessed);
+            nextFileDescriptor.setLastModified(lastModified);
+            nextFileDescriptor.setLastModified(length);
+            nextFileDescriptor.setDeleted(isDeleted);
+            nextFileDescriptor.setBlocks(blocks);
+
+            writeFileBlocks(nextFileDescriptor, currentFileBlocks);
+
+            // delete the previous row.
+            currentFileDescriptor.setDeleted(true);
+            cassandraClient
+                    .setColumns(ByteBufferUtil.bytes(currentFileDescriptor
+                            .getName()), null);
+
+            return true;
+
+        } catch (Exception e) {
+            throw new IOException(e.getMessage());
         }
     }
 
