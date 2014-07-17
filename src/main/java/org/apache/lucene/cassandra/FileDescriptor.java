@@ -343,9 +343,15 @@ public class FileDescriptor {
             if (insertAfter) {
                 blocks.add(existingIndex + 1, newBlock);
             } else {
+                // reverse the order.
+                // the result become [ ... , block-1, block-0, ... ]
                 blocks.add(existingIndex, newBlock);
             }
         }
+    }
+    
+    public void addBlock(FileBlock fileBlock) {
+        blocks.add(fileBlock);
     }
 
     /**
