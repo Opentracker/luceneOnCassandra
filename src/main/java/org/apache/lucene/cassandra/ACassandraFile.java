@@ -1036,18 +1036,39 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         }
         return result;
     }
-    
+
+    /**
+     * This operation is expensive in cassandra point of view. As columns are
+     * serialized on disk in the order denoted by the ordered_by attribute of a
+     * ColumnFamily. Similarly, rows are serialized according to the
+     * Partitioner. No choice, this is just design in cassandra. But in order to
+     * implement it, we do the following
+     * 
+     * This operation is splitted to multiple operation, get all data, copy to
+     * another new rowkey and delete the previous row.
+     * 
+     */
     @Override
-    public boolean renameTo(File file) {
-        if (file == null) {
+    public boolean renameTo(File dest) {
+        if (dest == null) {
             throw new NullPointerException();
         }
         if (fd == null) {
             return false;
         }
-        // TODO do rename now.
-        logger.error("RENAME IS CALLED!!! ");
-        return true;
+        if (this.isInvalid() || dest.isInvalid()) {
+            return false;
+        }
+        if (dest.getName() == null || dest.getName().equals("")) {
+            return false;
+        }
+        try {
+            return columnOrientedFile.renameFile(this.getFileDescriptor(),
+                    dest.getFileDescriptor());
+        } catch (Exception e) {
+            logger.error("unable to rename file " + e);
+            return false;
+        }
     }
     
     public long getTotalSpace() {
