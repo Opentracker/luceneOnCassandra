@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.cassandra.utils.ByteBufferUtil;
+import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,6 +65,12 @@ public class ColumnOrientedFile {
         cassandraClient.setColumns(
                 ByteBufferUtil.bytes(fileDescriptor.getName()),
                 blocksToBeWritten);
+        try {
+            cassandraClient.flush();
+        } catch (TTransportException e) {
+            e.printStackTrace();
+            throw new IOException(e.getMessage());
+        }
     }
 
     /**
