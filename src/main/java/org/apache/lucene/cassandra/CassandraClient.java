@@ -30,6 +30,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
 
 public class CassandraClient {
     protected Cassandra.Client thriftClient;
@@ -373,5 +374,12 @@ public class CassandraClient {
     
     public void close()  {
         transport.close();
+    }
+    
+    // dont know why always get broken pipe although already set socket to keep
+    // alive. we want flush because we want the data to be persistent as much as
+    // possible.
+    public void flush() throws TTransportException {
+        //transport.flush();
     }
 }
