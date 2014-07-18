@@ -1402,6 +1402,22 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         }  
     }
 
+    /**
+     * {@link org.apache.lucene.cassandra.File#read() read()}
+     * 
+     * @throws IOException
+     */
+    @Override
+    public int read() throws IOException {
+        logger.trace("reading a byte");
+        byte[] b = new byte[1];
+        int value = read(b, 0, 1);
+        if (value == -1) {
+            return value;
+        }
+        return b[0];
+    }
+
     @Override
     public FileSystem getFileSystem() {
         return fs;
