@@ -283,6 +283,15 @@ public class FSFile implements File, Serializable {
     public String getName() {
         return thePrivateFile.getName();
     }
+    
+    /**
+     * TODO 
+     * {@link org.apache.lucene.cassandra.File#read() read()}
+     */
+    @Override
+    public int read() {
+        return -1;
+    }
 
     // @Override
     // public RandomAccessFile getRandomAccessFile(File fullFile,

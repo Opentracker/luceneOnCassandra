@@ -439,5 +439,14 @@ public class HadoopFile implements File, Serializable {
         // TODO
     }
     
+    /**
+     * TODO 
+     * {@link org.apache.lucene.cassandra.File#read() read()}
+     */
+    @Override
+    public int read() {
+        return -1;
+    }
+    
 
 }
