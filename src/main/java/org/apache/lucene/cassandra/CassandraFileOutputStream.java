@@ -22,7 +22,6 @@ import sun.misc.IoTrace;
  * of raw bytes such as image data. For writing streams of characters, consider 
  * using <code>FileWriter</code>.
  * 
- * TODO
  */
 public class CassandraFileOutputStream extends OutputStream {
     
