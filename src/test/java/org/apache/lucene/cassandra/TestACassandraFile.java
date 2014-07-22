@@ -45,25 +45,34 @@ public class TestACassandraFile extends OpentrackerTestBase {
     public void testRead() {
         
         try {
-            ACassandraFile writeFile = new ACassandraFile("/", "removeMe.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
+            ACassandraFile writeFile = new ACassandraFile("/", "removeMe.txt", IOContext.DEFAULT, true, keyspace, columnFamily, 4);
             
             // C B A
-            byte[] b = {67, 66, 65};
-            // in cassandra, stored as 434241
+            byte[] b = {70, 69, 68, 67, 66, 65};
+            // in cassandra, stored as 46454443
+            //                                        4241
             writeFile.write(b, 0, b.length);
             writeFile.close();
             
-            ACassandraFile readFile = new ACassandraFile("/", "removeMe.txt", IOContext.READ, true, keyspace, columnFamily, blockSize);
+            ACassandraFile readFile = new ACassandraFile("/", "removeMe.txt", IOContext.READ, true, keyspace, columnFamily, 4);
             int value = readFile.read();
+            assertEquals(70, value);
+            
+            value = readFile.read();
+            assertEquals(69, value);
+            
+            value = readFile.read();
+            assertEquals(68, value);
+            
+            value = readFile.read();
             assertEquals(67, value);
             
             value = readFile.read();
-            //assertEquals(66, value);
+            assertEquals(66, value);
             
             value = readFile.read();
             assertEquals(65, value);
             
-            // TODO fix me
             value = readFile.read();
             assertEquals(-1, value);
             readFile.close();
@@ -77,14 +86,36 @@ public class TestACassandraFile extends OpentrackerTestBase {
     
     @Test
     public void testRead1() {
-        //ACassandraFile writeFile = new ACassandraFile("/", "removeMe.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
-        //writeFile.write(67, true);
-        //writeFile.write(66, true);
-        //writeFile.write(65, true);
-        // in cassandra store as 
-        // block-0 43 
-        // block-1 42
-        // block-2 41
+        try {
+            ACassandraFile writeFile = new ACassandraFile("/", "removeMe.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
+            writeFile.write(67, true);
+            writeFile.write(66, true);
+            writeFile.write(65, true);
+            writeFile.close();
+            // in cassandra store as 
+            // block-0 43 
+            // block-1 42
+            // block-2 41
+            
+            ACassandraFile readFile = new ACassandraFile("/", "removeMe.txt", IOContext.READ, true, keyspace, columnFamily, 4);
+            int value = readFile.read();
+            assertEquals(67, value);
+            
+            value = readFile.read();
+            assertEquals(66, value);
+            
+            value = readFile.read();
+            assertEquals(65, value);
+            
+            value = readFile.read();
+            assertEquals(-1, value);
+            readFile.close();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("fail is not expected");
+        }
+        
     }
 
 }
