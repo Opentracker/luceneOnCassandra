@@ -790,6 +790,10 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
                     "read length must not greater than buffer length minus buffer offset");
         }
 
+        if (currentBlock.getDataPosition() == -1) {
+            return -1;
+        }
+
         if (len == 0) {
             return 0;
         }
@@ -892,9 +896,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
                     }
                     if (!resetPosition && bytesToReadFromBlock > remain) {
                         if (remain > 0) {
-                            // logger.trace("remain = {}",
-                            // blockToBeRead.getDataLength() -
-                            // blockToBeRead.getDataPosition());
+                            // logger.trace("remain = {}", remain);
                             bytesToReadFromBlock = remain;
 
                         }
@@ -951,8 +953,11 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
                 currentBlock = nextBlock;
                 logger.trace("nextblock set " + currentBlock);
                 logger.trace("nexblock {}", nextBlock.toString());
+                currentBlock.setDataPosition(0);
+            } else {
+                currentBlock.setDataPosition(-1);
             }
-            currentBlock.setDataPosition(0);
+            
             logger.trace("currentBlock {}", currentBlock.toString());
             logger.trace("using block {}", currentBlock.getBlockNumber());
         }
