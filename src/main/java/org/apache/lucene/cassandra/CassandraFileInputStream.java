@@ -9,7 +9,6 @@ import org.apache.lucene.cassandra.nio.FileChannelImpl;
 
 import sun.misc.IoTrace;
 
-// TODO
 public class CassandraFileInputStream extends InputStream {
 
     /* File Descriptor - handle to the open file */
@@ -104,7 +103,7 @@ public class CassandraFileInputStream extends InputStream {
         return b;
     }
 
-    public native int read0();
+    //public native int read0();
 
     public FileChannel getChannel() {
         synchronized (this) {
