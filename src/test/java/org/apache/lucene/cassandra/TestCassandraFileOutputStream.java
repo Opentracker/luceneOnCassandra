@@ -5,17 +5,25 @@ import static org.junit.Assert.*;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 
+import net.opentracker.test.OpentrackerTestBase;
+
 import org.apache.lucene.cassandra.ACassandraFile;
 import org.apache.lucene.cassandra.CassandraClient;
 import org.apache.lucene.cassandra.CassandraFileOutputStream;
 import org.apache.lucene.cassandra.File;
+import org.apache.lucene.store.IOContext;
+import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.io.stream.BytesStreamOutput;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class TestCassandraFileOutputStream {
+public class TestCassandraFileOutputStream extends OpentrackerTestBase {
     
     CassandraClient client = null;
 
@@ -31,12 +39,12 @@ public class TestCassandraFileOutputStream {
 
     @Before
     public void setUp() throws Exception {
-        client = new CassandraClient("localhost", 9160, true, "lucene0", "index0", 16384);
+        client = new CassandraClient("localhost", 9160, true, keyspace, columnFamily, blockSize);
     }
 
     @After
     public void tearDown() throws Exception {
-        client.truncate("index0");
+        client.truncate(columnFamily);
         client.close();
     }
 
@@ -44,7 +52,7 @@ public class TestCassandraFileOutputStream {
     public void testCassandraFileOutputStreamFileNoAppend() {
         
         try {
-            File file = new ACassandraFile("/test/cassandraFileOutputStreamFile/removeMe.txt");
+            File file = new ACassandraFile("/test/cassandraFileOutputStreamFile/", "removeMe.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
             CassandraFileOutputStream cfos = new CassandraFileOutputStream(file);
             
             FileChannel fc = cfos.getChannel();
@@ -71,7 +79,7 @@ public class TestCassandraFileOutputStream {
         
         try {
            
-            File file = new ACassandraFile("/test/cassandraFileOutputStreamFile/removeMe.txt");
+            File file = new ACassandraFile("/test/cassandraFileOutputStreamFile/", "removeMe.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
             CassandraFileOutputStream cfos = new CassandraFileOutputStream(file, true);
                        
             FileChannel fc = cfos.getChannel();
@@ -99,5 +107,36 @@ public class TestCassandraFileOutputStream {
             fail("fail is not expected");
         }
     }
-
+    
+    /* TODO, how should the data be store in cassandra?
+    /* currently, output of builder.String() is
+     * => {
+     *      "version" : 132
+     *    }
+     *  
+     *  but in cassandra, it is 7d ( which is } )
+     */
+    @Test
+    public void testElasticSearch() {
+        try {
+            XContentBuilder builder = XContentFactory.contentBuilder(XContentType.JSON, new BytesStreamOutput());
+            builder.prettyPrint();
+            builder.startObject();
+            builder.field("version", 132);
+            builder.endObject();
+            builder.flush();
+            System.out.println("=> " + builder.string());
+            File stateFile = new ACassandraFile("/", "test/removeMe1.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
+            CassandraFileOutputStream fos = new CassandraFileOutputStream(stateFile);
+            BytesReference bytes = builder.bytes();
+            bytes.writeTo(fos);
+            fos.getChannel().force(true);
+            fos.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("fail is not expected");
+        }
+        
+    }
+    
 }
