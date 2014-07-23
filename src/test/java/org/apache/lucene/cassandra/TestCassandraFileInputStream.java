@@ -2,11 +2,15 @@ package org.apache.lucene.cassandra;
 
 import static org.junit.Assert.*;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.channels.FileChannel;
 
 import net.opentracker.test.OpentrackerTestBase;
 
 import org.apache.lucene.store.IOContext;
+import org.elasticsearch.common.io.Streams;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -29,7 +33,7 @@ public class TestCassandraFileInputStream extends OpentrackerTestBase {
     @Before
     public void setUp() throws Exception {
         
-        client = new CassandraClient("localhost", 9160, true, "lucene0", "index0", 16384);
+        client = new CassandraClient("localhost", 9160, true, keyspace, columnFamily, blockSize);
         
         // prepare some data for test.
         file = new ACassandraFile("/", "test/removeMe.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
@@ -44,7 +48,7 @@ public class TestCassandraFileInputStream extends OpentrackerTestBase {
 
     @After
     public void tearDown() throws Exception {
-        client.truncate("index0");
+        client.truncate(columnFamily);
         client.close();
     }
 
@@ -68,7 +72,18 @@ public class TestCassandraFileInputStream extends OpentrackerTestBase {
         }
         
     }
-
-
-
+    
+    @Test
+    public void testCopyToByteArray() {
+        try {
+            byte[] data = Streams.copyToByteArray(new CassandraFileInputStream(file));
+            byte[] expected = {67, 68, 69};
+            assertArrayEquals(expected, data);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("exception is not expected.");
+        }
+      
+    }
+    
 }
