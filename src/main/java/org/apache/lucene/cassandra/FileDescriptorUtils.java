@@ -175,31 +175,6 @@ public class FileDescriptorUtils {
             logger.trace("invalid");
             return null;
         }
-        
-        // TODO if big loop over big file pointer, may not be efficient, consider jump 
-        // to the nearest file block.
-        /* 
-        long jumpBlocksSize = 0;
-        
-        long newWhichBlock = filePointer / descriptor.getBlockSize();  
-        if ( newWhichBlock > 0) {
-            System.out.println("using new seek");
-            int start = (int) --newWhichBlock;
-            jumpBlocksSize = descriptor.getBlockSize() * start;
-            System.out.println("start " + start + " jumpBlocksSize " + jumpBlocksSize);
-            for (int i = start; i <= descriptor.getBlocks().size(); i++) {
-                System.out.println("loop " + i);
-                FileBlock fb = descriptor.getBlocks().get(i);
-                jumpBlocksSize += fb.getDataLength();
-                if (filePointer < jumpBlocksSize) {
-                    fb.setBlockOffset(jumpBlocksSize - fb.getDataLength());
-                    fb.setDataPosition((int) (filePointer - fb.getBlockOffset()));
-                    System.out.println("hit and return block " + fb.getBlockNumber());
-                    return fb;
-                }
-            }
-        }
-        */
 
         long blocksSize = 0;
         
