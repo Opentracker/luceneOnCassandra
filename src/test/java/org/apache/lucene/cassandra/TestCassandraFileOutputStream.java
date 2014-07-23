@@ -1,4 +1,4 @@
-package org.apache.lucene.store;
+package org.apache.lucene.cassandra;
 
 import static org.junit.Assert.*;
 
