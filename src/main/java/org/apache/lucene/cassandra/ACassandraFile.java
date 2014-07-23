@@ -1147,8 +1147,6 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
     }
     
     /**
-     * TODO, 
-     * data stored is in byte, the existing write is in hex?
      * 
      */
     public void write(int b, boolean append)  throws IOException {
