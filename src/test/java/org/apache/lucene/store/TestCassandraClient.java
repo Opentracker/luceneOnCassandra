@@ -67,7 +67,7 @@ public class TestCassandraClient extends OpentrackerTestBase {
 
             cc.setColumns(insertKey, columns);
             
-            byte[][] keys = cc.getKeys(columnNames);
+            byte[][] keys = cc.getKeys(columnNames, 131072);
             
             for (byte[] key : keys) {
                 System.out.println(new String(key));
