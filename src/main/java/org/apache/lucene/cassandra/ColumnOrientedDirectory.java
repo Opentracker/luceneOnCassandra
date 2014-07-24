@@ -44,11 +44,15 @@ public class ColumnOrientedDirectory {
     }
     
     /**
+     * Note, count in cassandra is of type int, should it should be possible to list
+     * Integer.MAX_VALUE but when that value is specified, cassandra throw 
+     * exception.  So just a random number right now, listing 2 power of 17.
+     * 
      * @return the names of the files in this directory
      * @throws IOException
      */
     public String[] getFileNames() throws IOException {
-        byte[][] keys = cassandraClient.getKeys(systemColumns);
+        byte[][] keys = cassandraClient.getKeys(systemColumns, 131072);
         List<String> fileNames = new ArrayList<String>();
         for (byte[] key : keys) {
             fileNames.add(new String(key));
