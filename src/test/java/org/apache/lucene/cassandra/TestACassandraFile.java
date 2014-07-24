@@ -118,4 +118,29 @@ public class TestACassandraFile extends OpentrackerTestBase {
         
     }
 
+    @Test
+    public void  testListFiles() {
+
+        try {
+            // prepare some data
+            ACassandraFile writeFile = new ACassandraFile("/", "removeMe.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
+            writeFile.write(67, true);
+            writeFile.write(66, true);
+            writeFile.write(65, true);
+            writeFile.close();
+
+            // test.
+            ACassandraFile file = new ACassandraFile("/", "removeMe.txt", IOContext.READ, true, keyspace, columnFamily, blockSize);
+            File[] files = file.listFiles();
+            file.close();
+
+            assertTrue(files.length == 1);
+            assertEquals("/removeMe.txt", files[0].getName());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
 }
