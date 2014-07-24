@@ -125,9 +125,12 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         String name = tokens[1];
         
         if (directory == null) {
+            // always start with root.
+            directory = "/";
             this.name = directory + name;
         } else {
             if (!directory.equals("/")) {
+                directory += "/";
                 this.name = directory + "/" + name;
             } else {
                 this.name = directory + name;
@@ -1096,7 +1099,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         String[] files = list();
         List<File> fl = new ArrayList<File>();
         for (String file : files) {
-            fl.add(new ACassandraFile(file));
+            fl.add(new ACassandraFile("/", file, IOContext.READ, true, this.getKeyspace(), this.getColumnFamily(), this.getBlockSize()));
         }
         return fl.toArray(new ACassandraFile[fl.size()]);
     }
