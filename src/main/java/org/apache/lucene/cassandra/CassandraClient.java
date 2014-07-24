@@ -109,7 +109,7 @@ public class CassandraClient {
      * @return the rows that contain those columns
      * @throws IOException
      */
-    public byte[][] getKeys(List<byte[]> columnNames) throws IOException {
+    public byte[][] getKeys(List<byte[]> columnNames, int count) throws IOException {
 
         try {
             List<ByteBuffer> converter = new ArrayList<ByteBuffer>();
@@ -125,7 +125,7 @@ public class CassandraClient {
                                             .setColumn_names(converter),
                                     new KeyRange().setStart_key(
                                             "".getBytes()).setEnd_key(
-                                            "".getBytes()),
+                                            "".getBytes()).setCount(count),
                                     ConsistencyLevel.ALL);
             List<byte[]> keys = new ArrayList<byte[]>();
             for (KeySlice keySlice : keySlices) {
