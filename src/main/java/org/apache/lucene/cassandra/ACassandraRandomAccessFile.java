@@ -216,9 +216,10 @@ public class ACassandraRandomAccessFile implements RandomAccessFile,
         synchronized (this) {
             if (channel == null) {
                 boolean rw = false;
-                if (mode.context == IOContext.Context.READ) {
+                
+                if (file.getMode().context == IOContext.Context.READ) {
                     rw = false;
-                } else if (mode.context == IOContext.Context.DEFAULT) {
+                } else if (file.getMode().context == IOContext.Context.DEFAULT) {
                     rw = true;
                 }
                 channel = FileChannelImpl.open(file.getFD(), file.getName(), true, rw, this);
