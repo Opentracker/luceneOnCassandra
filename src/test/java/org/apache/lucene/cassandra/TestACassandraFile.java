@@ -143,4 +143,16 @@ public class TestACassandraFile extends OpentrackerTestBase {
 
     }
 
+    /**
+     * Note: This default to always lucene0 and index0, which is not good. Putting in
+     * here and to improve and change in the future.
+     */
+    @Test
+    public void testACassandraFile() {
+        String child = "123";
+        ACassandraFile parent = new ACassandraFile("/test/removeMe.txt");
+        ACassandraFile file = new ACassandraFile(parent, child);
+
+    }
+
 }
