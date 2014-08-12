@@ -3,6 +3,8 @@ package org.apache.lucene.cassandra;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.lucene.store.IOContext;
 import org.junit.After;
@@ -119,6 +121,10 @@ public class TestACassandraFile extends OpentrackerTestBase {
     }
 
     @Test
+    /**
+     * TEST both methods of listfiles
+     * write out the example and expected as a comment.
+     */
     public void  testListFiles() {
 
         try {
@@ -149,10 +155,74 @@ public class TestACassandraFile extends OpentrackerTestBase {
      */
     @Test
     public void testACassandraFile() {
-        String child = "123";
-        ACassandraFile parent = new ACassandraFile("/test/removeMe.txt");
-        ACassandraFile file = new ACassandraFile(parent, child);
+        
+        CassandraClient lucene0 = null;
+        
+        // == Test ACassandraFile(File parent, String child) ==
+        try {
+            lucene0 = new CassandraClient(cassandraHost, rpcPort, frameMode, "lucene0", "index0", blockSize);
+            
+            // prepare data
+            String child = "123";
+            ACassandraFile parent = new ACassandraFile("/test/removeMe.txt");
+           
+            ACassandraFile file = new ACassandraFile(parent, child);
+            
+            List<byte[]> column = new ArrayList<byte[]>();
+            column.add("DESCRIPTOR".getBytes());
+            
+            byte[][] arrays = lucene0.getKeys(column, 1024);
+            
+            assertEquals(2, arrays.length);
+            assertEquals("/test/removeMe.txt", new String(arrays[0]));
+            assertEquals("/test/removeMe.txt/123", new String(arrays[1]));
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail("exception is not expected");
+        } finally {
+            if (lucene0 != null) {
+                try {
+                    lucene0.truncate("index0");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        // == Test ACassandraFile(File parent, String child) ==
+        
+
+        // == Test ACassandraFile(String canonicalPath)  ==
+        try {
+            lucene0 = new CassandraClient(cassandraHost, rpcPort, frameMode, "lucene0", "index0", blockSize);
+            
+            // prepare data
+            ACassandraFile testFile = new ACassandraFile("/test/dummy/removeMe.txt");
+            assertEquals("/test/dummy", testFile.getParent(true));
+            assertEquals("/test/dummy/removeMe.txt", testFile.getName());
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail("exception is not expected");
+        } finally {
+            if (lucene0 != null) {
+                try {
+                    lucene0.truncate("index0");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        // == Test ACassandraFile(String canonicalPath)  ==
+        
+        
+        // == ACassandraFile(String directory, String name, IOContext mode, boolean frameMode, String keyspace, String columnFamily, int blockSize)  ==
+
+        // prepare data
+        ACassandraFile testFile = new ACassandraFile("/test/dummy/", "removeMeMe.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
+        assertEquals("/test/dummy", testFile.getParent(true));
+        assertEquals("/test/dummy/removeMeMe.txt", testFile.getName());
+
+        // == ACassandraFile(String directory, String name, IOContext mode, boolean frameMode, String keyspace, String columnFamily, int blockSize)  ==
 
     }
-
 }
