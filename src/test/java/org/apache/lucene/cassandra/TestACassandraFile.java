@@ -121,12 +121,9 @@ public class TestACassandraFile extends OpentrackerTestBase {
     }
 
     @Test
-    /**
-     * TEST both methods of listfiles
-     * write out the example and expected as a comment.
-     */
     public void  testListFiles() {
 
+        // ---test public File[] listFiles() ---
         try {
             // prepare some data
             ACassandraFile writeFile = new ACassandraFile("/", "removeMe.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
@@ -141,11 +138,64 @@ public class TestACassandraFile extends OpentrackerTestBase {
             file.close();
 
             assertTrue(files.length == 1);
+            // in cassandra, it is /removeMe.txt;
             assertEquals("/removeMe.txt", files[0].getName());
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+        // ---test public File[] listFiles() ---
+
+        // ---test public File[] listFiles(CassandraFileFilter filter) ---
+        try {
+            // prepare some data
+            ACassandraFile writeFile = new ACassandraFile("/", "removeMe.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
+            writeFile.write(67, true);
+            writeFile.write(66, true);
+            writeFile.write(65, true);
+            writeFile.close();
+
+            // test.
+            ACassandraFile file = new ACassandraFile("/", "removeMe.txt", IOContext.READ, true, keyspace, columnFamily, blockSize);
+            File[] files = file.listFiles(null);
+            file.close();
+
+            assertTrue(files.length == 1);
+            // in cassandra, it is /removeMe.txt;
+            assertEquals("/removeMe.txt", files[0].getName());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            // prepare some data
+            ACassandraFile writeFile = new ACassandraFile("/", "removeMe.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
+            writeFile.write(67, true);
+            writeFile.write(66, true);
+            writeFile.write(65, true);
+            writeFile.close();
+
+            // test.
+            ACassandraFile file = new ACassandraFile("/", "removeMe.txt", IOContext.READ, true, keyspace, columnFamily, blockSize);
+            CassandraFileFilter filter = new CassandraFileFilter() {
+
+                @Override
+                public boolean accept(File pathname) {
+                    return false;
+                }
+            };
+            File[] files = file.listFiles(filter);
+            file.close();
+
+            // in cassandra, it is /removeMe.txt; but because the accept always false, return
+            // nothing instead.
+            assertTrue(files.length == 0);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // ---test public File[] listFiles(CassandraFileFilter filter) ---
 
     }
 
@@ -167,6 +217,7 @@ public class TestACassandraFile extends OpentrackerTestBase {
             ACassandraFile parent = new ACassandraFile("/test/removeMe.txt");
            
             ACassandraFile file = new ACassandraFile(parent, child);
+            file.close();
             
             List<byte[]> column = new ArrayList<byte[]>();
             column.add("DESCRIPTOR".getBytes());
@@ -198,6 +249,7 @@ public class TestACassandraFile extends OpentrackerTestBase {
             
             // prepare data
             ACassandraFile testFile = new ACassandraFile("/test/dummy/removeMe.txt");
+            testFile.close();
             assertEquals("/test/dummy", testFile.getParent(true));
             assertEquals("/test/dummy/removeMe.txt", testFile.getName());
         } catch (IOException e) {
@@ -219,6 +271,7 @@ public class TestACassandraFile extends OpentrackerTestBase {
 
         // prepare data
         ACassandraFile testFile = new ACassandraFile("/test/dummy/", "removeMeMe.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
+        testFile.close();
         assertEquals("/test/dummy", testFile.getParent(true));
         assertEquals("/test/dummy/removeMeMe.txt", testFile.getName());
 
