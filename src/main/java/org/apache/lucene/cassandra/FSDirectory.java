@@ -297,8 +297,8 @@ public abstract class FSDirectory extends BaseDirectory {
   @Override
   public void deleteFile(String name) throws IOException {
     ensureOpen();
-    logger.info("deleteFile {}", name);
     File file = directory.get(directory, name);// new File(directory, name);
+    logger.info("deleteFile {} abs {}", name, file.getAbsolutePath());
     if (!file.delete())
       throw new IOException("Cannot delete " + file);
     staleFiles.remove(name);
