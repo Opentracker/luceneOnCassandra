@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.lucene.store.IOContext;
@@ -120,32 +121,60 @@ public class TestACassandraFile extends OpentrackerTestBase {
         
     }
 
+    //   TODO File[] indicesList = indicesLocation.listFiles(); is wrong , need to rewrite
     @Test
     public void  testListFiles() {
 
         // ---test public File[] listFiles() ---
         try {
+            System.out.println("test 0");
             // prepare some data
             ACassandraFile writeFile = new ACassandraFile("/", "removeMe.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
             writeFile.write(67, true);
             writeFile.write(66, true);
             writeFile.write(65, true);
             writeFile.close();
+            writeFile = new ACassandraFile("/test", "removeMe.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
+            writeFile.write(67, true);
+            writeFile.write(66, true);
+            writeFile.write(65, true);
+            writeFile.close();
+            writeFile = new ACassandraFile("/test", "bar.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
+            writeFile.write(67, true);
+            writeFile.write(66, true);
+            writeFile.write(65, true);
+            writeFile.close();
+            writeFile = new ACassandraFile("/test", "baz.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
+            writeFile.write(67, true);
+            writeFile.write(66, true);
+            writeFile.write(65, true);
+            writeFile.close();
 
+            System.out.println("test 1");
             // test.
-            ACassandraFile file = new ACassandraFile("/", "removeMe.txt", IOContext.READ, true, keyspace, columnFamily, blockSize);
+            ACassandraFile file = new ACassandraFile("/test", "", IOContext.READ, true, keyspace, columnFamily, blockSize);
             File[] files = file.listFiles();
             file.close();
 
-            assertTrue(files.length == 1);
+            System.out.println("test 2");
+            assertEquals(3, files.length);
+            System.out.println(Arrays.asList(files).contains(new ACassandraFile("/test", "removeMe.txt", IOContext.READ, true, keyspace, columnFamily, blockSize)));
+            System.out.println(Arrays.asList(files).contains(new ACassandraFile("/test", "baz.txt", IOContext.READ, true, keyspace, columnFamily, blockSize)));
+            System.out.println(Arrays.asList(files).contains(new ACassandraFile("/test", "bar.txt", IOContext.READ, true, keyspace, columnFamily, blockSize)));
+            System.out.println("test 3");
             // in cassandra, it is /removeMe.txt;
-            assertEquals("/removeMe.txt", files[0].getName());
+            //assertEquals("removeMe.txt", files[0].getName());
+            //assertEquals("/test/removeMe.txt", files[0].getAbsolutePath());
+            
+            //assertEquals("/removeMe.txt", files[1].getName());
+            //assertEquals("/removeMe.txt", files[1].getAbsolutePath());
 
         } catch (Exception e) {
             e.printStackTrace();
         }
         // ---test public File[] listFiles() ---
 
+        /*
         // ---test public File[] listFiles(CassandraFileFilter filter) ---
         try {
             // prepare some data
@@ -196,7 +225,8 @@ public class TestACassandraFile extends OpentrackerTestBase {
             e.printStackTrace();
         }
         // ---test public File[] listFiles(CassandraFileFilter filter) ---
-
+         
+         */
     }
 
     /**
