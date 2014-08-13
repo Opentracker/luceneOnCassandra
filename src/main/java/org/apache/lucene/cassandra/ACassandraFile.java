@@ -142,7 +142,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         this.keyspace = "lucene0";
         this.columnFamily = "index0";
         this.cassandraDirectory = directory;
-        logger.info("cassandraDirectory {} name {}", cassandraDirectory, name);
+        //logger.info("cassandraDirectory {} name {}", cassandraDirectory, name);
         this.fs = new CassandraFileSystem(provider, cassandraDirectory);
         boolean readOnly = true;
         monitor = JmxMonitor.getInstance().getCassandraMonitor(this);
@@ -219,7 +219,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         this.keyspace = keyspace;
         this.columnFamily = columnFamily;
         this.cassandraDirectory = directory;
-        logger.info("cassandraDirectory {} name {}", cassandraDirectory, name);
+        //logger.info("cassandraDirectory {} name {}", cassandraDirectory, name);
         this.fs = new CassandraFileSystem(provider, cassandraDirectory);
         boolean readOnly = true;
         monitor = JmxMonitor.getInstance().getCassandraMonitor(this);
@@ -1095,7 +1095,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
     }
     
     public File[] listFiles() {
-        logger.error("listFiles() IS CALLED!!! ");
+        //logger.error("listFiles() IS CALLED!!! ");
         String[] files = list();
         List<File> fl = new ArrayList<File>();
         for (String file : files) {
@@ -1112,7 +1112,8 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
 
         ArrayList<File> files = new ArrayList<>();
         for (String s : ss) {
-            File f = new ACassandraFile(this, s);
+            //File f = new ACassandraFile(this, s);
+            File f = new ACassandraFile("/", this.getName(), this.getMode(), true, this.getKeyspace(), this.getColumnFamily(), this.getBlockSize());
             if ((filter == null) || filter.accept(f))
                 files.add(f);
         }
