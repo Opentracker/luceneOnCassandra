@@ -1099,7 +1099,10 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         String[] files = list();
         List<File> fl = new ArrayList<File>();
         for (String file : files) {
-            fl.add(new ACassandraFile("/", file, IOContext.READ, true, this.getKeyspace(), this.getColumnFamily(), this.getBlockSize()));
+            File f = new ACassandraFile("/", file, IOContext.READ, true, this.getKeyspace(), this.getColumnFamily(), this.getBlockSize());
+            if (this.getParent(true).equals(f.getParent(true))) {
+                fl.add(f);
+            }
         }
         return fl.toArray(new ACassandraFile[fl.size()]);
     }
@@ -1123,7 +1126,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
     public String getParent(boolean dummy) {
         int index = name.lastIndexOf("/");
         if (name.substring(0, index).equals("")) {
-            return null;
+            return "/";
         } else {
             return name.substring(0, index);
         }
@@ -1580,6 +1583,16 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
     public int compareTo(Path other) {
         // TODO Auto-generated method stub
         return 0;
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
+
+    @Override
+    public boolean equals(Object f) {
+        return f instanceof File && ((File)f).getName().equals(name);
     }
 
 }
