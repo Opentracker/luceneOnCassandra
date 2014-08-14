@@ -203,7 +203,8 @@ public class TestACassandraFile extends OpentrackerTestBase {
 
             assertTrue(String.valueOf(files.length), files.length == 1);
             // in cassandra, it is /removeMe.txt;
-            assertEquals("/removeMe.txt", files[0].getName());
+            assertEquals("removeMe.txt", files[0].getName());
+            assertEquals("/removeMe.txt", files[0].getAbsolutePath());
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -295,7 +296,8 @@ public class TestACassandraFile extends OpentrackerTestBase {
                     new ACassandraFile("/test/dummy/removeMe.txt");
             testFile.close();
             assertEquals("/test/dummy", testFile.getParent(true));
-            assertEquals("/test/dummy/removeMe.txt", testFile.getName());
+            assertEquals("removeMe.txt", testFile.getName());
+            assertEquals("/test/dummy/removeMe.txt", testFile.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
             fail("exception is not expected");
@@ -321,11 +323,29 @@ public class TestACassandraFile extends OpentrackerTestBase {
                         blockSize);
         testFile.close();
         assertEquals("/test/dummy", testFile.getParent(true));
-        assertEquals("/test/dummy/removeMeMe.txt", testFile.getName());
+        assertEquals("removeMeMe.txt", testFile.getName());
+        assertEquals("/test/dummy/removeMeMe.txt", testFile.getAbsolutePath());
 
         // == ACassandraFile(String directory, String name, IOContext mode,
         // boolean frameMode, String keyspace, String columnFamily, int
         // blockSize) ==
 
+    }
+
+    @Test
+    public void testName() {
+        ACassandraFile testFile =
+                new ACassandraFile("/", "removeMeMe.txt",
+                        IOContext.DEFAULT, true, keyspace, columnFamily,
+                        blockSize);
+
+        assertEquals("removeMeMe.txt", testFile.getName());
+
+        testFile =
+                new ACassandraFile("/", "",
+                        IOContext.DEFAULT, true, keyspace, columnFamily,
+                        blockSize);
+
+        assertEquals("", testFile.getName());
     }
 }
