@@ -451,4 +451,6 @@ public interface File {
      */
     public int read() throws IOException;
 
+    public boolean equals(Object f);
+
 }
