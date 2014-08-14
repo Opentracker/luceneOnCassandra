@@ -995,7 +995,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         int index = name.lastIndexOf("/");
         index++;
         if (name.substring(index).equals("")) {
-            return "/";
+            return "";
         } else {
             return name.substring(index);
         }
