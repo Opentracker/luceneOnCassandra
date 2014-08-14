@@ -984,9 +984,21 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         return fd;
     }
 
+    /**
+     * cannot change implementation of variable name to java.io.File as the code
+     * is integrated into cassandra. Thus, we do alteration here to achieve the
+     * behavior similar to java.io.File.getName() whilst still able to work with
+     * cassandra.
+     */
     public String getName() {
         // logger.trace("called getName {}", name);
-        return name;
+        int index = name.lastIndexOf("/");
+        index++;
+        if (name.substring(index).equals("")) {
+            return "/";
+        } else {
+            return name.substring(index);
+        }
     }
 
     public void setName(String name) {
@@ -1592,7 +1604,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
 
     @Override
     public boolean equals(Object f) {
-        return f instanceof File && ((File)f).getName().equals(name);
+        return f instanceof File && ((File)f).getAbsolutePath().equals(name);
     }
 
 }
