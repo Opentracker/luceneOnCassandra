@@ -180,13 +180,16 @@ public class ACassandraRandomAccessFile implements RandomAccessFile,
             FileDescriptor cassandraFD =
                     cof.getFileDescriptor(file.getName(), file.getBlockSize());
 
-            String cassandraFDString =
-                    FileDescriptorUtils.toString(cassandraFD);
+            if (cassandraFD != null) {
 
-            if (!cassandraFDString.equals(existingFD)) {
-                logger.error("existing fd {}", FileDescriptorUtils.toString(fd));
-                logger.error("cassandra fd {}",
-                        FileDescriptorUtils.toString(cassandraFD));
+                String cassandraFDString =
+                        FileDescriptorUtils.toString(cassandraFD);
+
+                if (!cassandraFDString.equals(existingFD)) {
+                    logger.error("existing fd {}", FileDescriptorUtils.toString(fd));
+                    logger.error("cassandra fd {}",
+                            FileDescriptorUtils.toString(cassandraFD));
+                }
             }
 
             cof.setFileDescriptor(file.getName(), fd);
