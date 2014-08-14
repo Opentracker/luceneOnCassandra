@@ -175,6 +175,17 @@ public class TestACassandraFile extends OpentrackerTestBase {
             assertEquals(1, files.length);            
             assertTrue(Arrays.toString(files), Arrays.asList(files).contains(new ACassandraFile("/", "removeMe.txt", IOContext.READ, true, keyspace, columnFamily, blockSize)));
 
+            /* TODO, this has to work.
+            file = new ACassandraFile("/", "test", IOContext.READ, true, keyspace, columnFamily, blockSize);
+            files = file.listFiles();
+            file.close();
+
+            assertEquals(3, files.length);
+            assertTrue(Arrays.toString(files), Arrays.asList(files).contains(new ACassandraFile("/test", "removeMe.txt", IOContext.READ, true, keyspace, columnFamily, blockSize)));
+            assertTrue(Arrays.toString(files), Arrays.asList(files).contains(new ACassandraFile("/test", "baz.txt", IOContext.READ, true, keyspace, columnFamily, blockSize)));
+            assertTrue(Arrays.toString(files), Arrays.asList(files).contains(new ACassandraFile("/test", "bar.txt", IOContext.READ, true, keyspace, columnFamily, blockSize)));
+            */
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally  {
