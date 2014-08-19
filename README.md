@@ -1,5 +1,8 @@
 luceneOnCassandra
 =================
+
+The goal of this project is to have the lucene index stored in Apache Cassandra. 
+
 change the following configuration in apache-cassandra-1.0.8
 * apache-cassandra-1.0.8/conf/cassandra.yaml
 * apache-cassandra-1.0.8/conf/log4j-server.properties
