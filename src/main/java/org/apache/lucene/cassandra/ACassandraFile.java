@@ -1103,7 +1103,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
     
     public long getFreeSpace() {
         logger.error("getFreeSpace() IS CALLED!!! ");
-        return Long.MAX_VALUE;
+        return Long.MAX_VALUE - 1;
     }
     
     public File[] listFiles() {
