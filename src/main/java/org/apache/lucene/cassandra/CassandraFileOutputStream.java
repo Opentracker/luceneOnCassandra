@@ -24,7 +24,7 @@ import sun.misc.IoTrace;
  * 
  */
 public class CassandraFileOutputStream extends OutputStream {
-    
+
     /**
      * The system dependent file descriptor.
      */
@@ -165,6 +165,22 @@ public class CassandraFileOutputStream extends OutputStream {
         }
     }
     
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+        Object traceContext = IoTrace.fileWriteBegin(path);
+        int bytesWritten = 0;
+        try {
+            //writeBytes(b, off, len, append);
+            if (! append) {
+                file.delete();
+            }
+            file.write(b, off, len);
+            bytesWritten = len;
+        } finally {
+            IoTrace.fileWriteEnd(traceContext, bytesWritten);
+        }
+    }
+
     /**
      * Writes the specified byte to this file output stream.
      *
