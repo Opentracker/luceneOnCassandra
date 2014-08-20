@@ -21,7 +21,7 @@
    </parent>
    <groupId>org.apache.lucene.store</groupId>
    <artifactId>luceneOnCassandra-module</artifactId>
-   <version>0.0.2-SNAPSHOT</version>
+   <version>0.0.3-SNAPSHOT</version>
    <name>Lucene on Cassandra</name>
    <description>Store lucene indices on cassandra</description>
    <inceptionYear>2014</inceptionYear>
