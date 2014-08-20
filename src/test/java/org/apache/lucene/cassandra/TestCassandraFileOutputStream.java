@@ -4,6 +4,11 @@ import static org.junit.Assert.*;
 
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import net.opentracker.test.OpentrackerTestBase;
 
@@ -108,30 +113,82 @@ public class TestCassandraFileOutputStream extends OpentrackerTestBase {
         }
     }
     
-    /* TODO, how should the data be store in cassandra?
-    /* currently, output of builder.String() is
-     * => {
-     *      "version" : 132
-     *    }
-     *  
-     *  but in cassandra, it is 7d ( which is } )
-     */
     @Test
-    public void testElasticSearch() {
+    public void testElasticSearchNoAppend() {
         try {
+            // prepare data.
             XContentBuilder builder = XContentFactory.contentBuilder(XContentType.JSON, new BytesStreamOutput());
             builder.prettyPrint();
             builder.startObject();
             builder.field("version", 132);
             builder.endObject();
             builder.flush();
-            System.out.println("=> " + builder.string());
             File stateFile = new ACassandraFile("/", "test/removeMe1.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
             CassandraFileOutputStream fos = new CassandraFileOutputStream(stateFile);
             BytesReference bytes = builder.bytes();
+            fos.write(bytes.array(), 0, 10);
             bytes.writeTo(fos);
             fos.getChannel().force(true);
             fos.close();
+
+            // test
+            StringBuffer actual = new StringBuffer();
+            byte[] filename = "/test/removeMe1.txt".getBytes();
+            Map<byte[], byte[]> blocks = client.getColumns(filename);
+            for (Entry<byte[], byte[]> block : blocks.entrySet()) {
+                String column = new String(block.getKey());
+                if (column.equals("DESCRIPTOR")) {
+                    continue;
+                }
+                actual.append(Util.bytesToHex(block.getValue()));
+            }
+
+            assertEquals(actual.toString(), "7B0A20202276657273696F6E22203A203133320A7D");
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("fail is not expected");
+        }
+
+    }
+
+    @Test
+    public void testElasticSearchAppend() {
+        try {
+            // prepare data.
+            XContentBuilder builder = XContentFactory.contentBuilder(XContentType.JSON, new BytesStreamOutput());
+            builder.prettyPrint();
+            builder.startObject();
+            builder.field("version", 12345);
+            builder.endObject();
+            builder.flush();
+            File stateFile = new ACassandraFile("/", "test/removeMe1.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
+            byte[] b = "ABC".getBytes();
+            stateFile.write(b, 0, b.length);
+            CassandraFileOutputStream fos = new CassandraFileOutputStream(stateFile, true);
+            BytesReference bytes = builder.bytes();
+            fos.write(bytes.array(), 0, 10);
+            bytes.writeTo(fos);
+            fos.getChannel().force(true);
+            fos.close();
+
+            // test
+            StringBuffer actual = new StringBuffer();
+            Map<String, String> actuals = new LinkedHashMap<String, String>();
+            byte[] filename = "/test/removeMe1.txt".getBytes();
+            Set<byte []> columns = new LinkedHashSet<byte[]>();
+            columns.add("BLOCK-0".getBytes());
+            columns.add("BLOCK-1".getBytes());
+            columns.add("BLOCK-2".getBytes());
+            Map<byte[], byte[]> blocks = client.getColumns(filename, columns);
+            for (Entry<byte[], byte[]> block : blocks.entrySet()) {
+                actuals.put(new String(block.getKey()), Util.bytesToHex(block.getValue()));
+            }
+
+            actual.append(actuals.get("BLOCK-0"));
+            actual.append(actuals.get("BLOCK-1"));
+            actual.append(actuals.get("BLOCK-2"));
+
+            assertEquals(actual.toString(), "4142437B0A20202276657273697B0A20202276657273696F6E22203A2031323334350A7D");
         } catch (Exception e) {
             e.printStackTrace();
             fail("fail is not expected");
