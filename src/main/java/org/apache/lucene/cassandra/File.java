@@ -438,6 +438,25 @@ public interface File {
     public void write(int b, boolean append)  throws IOException;
 
     /**
+     * in python talk it would be something like file.write(b[off:off+len])) so
+     * the byte array , b and take the data from specified offset and until
+     * offset + length. then write this length of data into the file
+     *
+     * Writes <code>len</code> bytes from the specified byte array starting at
+     * offset <code>off</code> to this file. overwrite.
+     *
+     * @param b
+     *            the data.
+     * @param off
+     *            the start offset in the data.
+     * @param len
+     *            the number of bytes to write.
+     * @exception IOException
+     *                if an I/O error occurs.
+     */
+    public void write(byte[] b, int off, int len) throws IOException;
+
+    /**
      * Reads the next byte of data from the input stream. The value byte is
      * returned as an <code>int</code> in the range <code>0</code> to
      * <code>255</code>. If no byte is available because the end of the stream
