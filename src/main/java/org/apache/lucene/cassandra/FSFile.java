@@ -280,6 +280,10 @@ public class FSFile implements File, Serializable {
         // TODO
     }
     
+    public void write(byte[] b, int off, int len) throws IOException {
+        // TODO
+    }
+
     public String getName() {
         return thePrivateFile.getName();
     }

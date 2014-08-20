@@ -439,6 +439,10 @@ public class HadoopFile implements File, Serializable {
         // TODO
     }
     
+    public void write(byte[] b, int off, int len) throws IOException {
+        // TODO
+    }
+
     /**
      * TODO 
      * {@link org.apache.lucene.cassandra.File#read() read()}
