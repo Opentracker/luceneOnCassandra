@@ -1,5 +1,4 @@
 # LuceneOnCassandra
-=================
 
 The goal of this project is to store the Apache lucene index in Apache Cassandra.
 This means that Cassandra will serve as the medium for indexing and querying without changes to other Lucene indexing and querying APIs. In other words, Cassandra will only be used as the datastore for the index files, and the rest of the logic will go through lucene’s indexing procedures.
