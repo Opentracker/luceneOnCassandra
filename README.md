@@ -29,11 +29,11 @@ To run these examples and tests, the first step is to start the Cassandra 'insta
 
 ### License
 
-<pre>
 This software is licensed under the Apache 2 license, quoted below.
 
-Copyright 2003-2014 Opentracker <http://www.opentracker.net>
+Copyright 2003-2014 [Opentracker.net](www.opentracker.net)
 
+<pre>
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
 use this file except in compliance with the License. You may obtain a copy of
 the License at http://www.apache.org/licenses/LICENSE-2.0
