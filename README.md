@@ -25,7 +25,9 @@ To run these examples and tests, the first step is to start the Cassandra 'insta
    $ cassandra -f
 3. run pom.xml or in Eclipse using JUnit.
 
-## License
+
+
+### License
 
 <pre>
 This software is licensed under the Apache 2 license, quoted below.
