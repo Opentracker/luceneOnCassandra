@@ -123,9 +123,9 @@ public class CassandraClient {
                                             .setColumn_family(columnFamily),
                                     new SlicePredicate()
                                             .setColumn_names(converter),
-                                    new KeyRange().setStart_key(
-                                            "".getBytes()).setEnd_key(
-                                            "".getBytes()).setCount(count),
+                                    new KeyRange(count).setStart_key(
+                                            ByteBufferUtil.EMPTY_BYTE_BUFFER).setEnd_key(
+                                            ByteBufferUtil.EMPTY_BYTE_BUFFER),
                                     ConsistencyLevel.ALL);
             List<byte[]> keys = new ArrayList<byte[]>();
             for (KeySlice keySlice : keySlices) {
