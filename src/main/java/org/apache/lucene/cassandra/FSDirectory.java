@@ -247,6 +247,7 @@ public abstract class FSDirectory extends BaseDirectory {
         }
       });
 
+    logger.info("listing directory " + dir.getAbsolutePath());
     for( int i = 0; i <= result.length - 1; i++)
     {
         // get element number 0 and 1 and put it in a variable, 
@@ -284,7 +285,11 @@ public abstract class FSDirectory extends BaseDirectory {
   public long fileLength(String name) throws IOException {
     ensureOpen();
     logger.info("fileLength {}, {}", directory, name);
-    File file = directory.get(directory, name);// new File(directory, name);
+    if (!name.startsWith("/")) {
+        name = directory.getAbsolutePath() + "/" + name;
+    }
+    //File file = directory.get(directory, name);// new File(directory, name);
+    File file = new ACassandraFile("/", name, IOContext.DEFAULT, true, "lucene0", "index0", 16384);
     final long len = file.length();
     if (len == 0 && !file.exists()) {
       throw new FileNotFoundException(name);
@@ -308,7 +313,7 @@ public abstract class FSDirectory extends BaseDirectory {
   @Override
   public IndexOutput createOutput(String name, IOContext context) throws IOException {
     ensureOpen();
-    logger.info("createOutput {}", name);
+    logger.info("createOutput {} parent abs {}", name, directory.getAbsolutePath());
     ensureCanWrite(name);
     return new FSIndexOutput(this, name);
   }
@@ -430,6 +435,7 @@ public abstract class FSDirectory extends BaseDirectory {
       this.name = name;
 //      file = new RandomAccessFile(new File(parent.directory, name), "rw");
       file = parent.directory.getRandomAccessFile(parent.directory.get(parent.directory, name), "rw");
+      logger.info("FSIndexOutput name " + file.getFile().getAbsolutePath());
       isOpen = true;
     }
 
@@ -486,7 +492,7 @@ public abstract class FSDirectory extends BaseDirectory {
   }
 
   protected void fsync(String name) throws IOException {
-      logger.info("fsync {}", name);
+      logger.info("fsync {} directory abs {}", name, directory.getAbsolutePath());
       File fullFile = directory.get(directory, name);
       IOUtils.fsync(fullFile, false);
   }
