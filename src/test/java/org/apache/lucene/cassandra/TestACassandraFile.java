@@ -251,6 +251,34 @@ public class TestACassandraFile extends OpentrackerTestBase {
         // ---test public File[] listFiles(CassandraFileFilter filter) ---
     }
 
+    @Test
+    public void  testListFilesMany() {
+
+        // ---test public File[] listFiles() ---
+        try {
+            // prepare some data
+            for (int i = 0 ; i < 500; i++) {
+                ACassandraFile writeFile = new ACassandraFile("/vol/elasticsearch/OT_ES_Cluster/nodes/0/indices/twitter/_state/", "state-"+i, IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
+                writeFile.write(67, true);
+                writeFile.write(66, true);
+                writeFile.write(65, true);
+                writeFile.close();
+            }
+
+            // test.
+            ACassandraFile file = new ACassandraFile("/vol/elasticsearch/OT_ES_Cluster/nodes/0/indices/twitter/_state/", "", IOContext.READ, true, keyspace, columnFamily, blockSize);
+            File[] files = file.listFiles();
+            file.close();
+
+            assertEquals(500, files.length);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // ---test public File[] listFiles() ---
+
+    }
+
     /**
      * Note: This default to always lucene0 and index0, which is not good.
      * Putting in here and to improve and change in the future.
@@ -276,7 +304,7 @@ public class TestACassandraFile extends OpentrackerTestBase {
             List<byte[]> column = new ArrayList<byte[]>();
             column.add("DESCRIPTOR".getBytes());
 
-            byte[][] arrays = lucene0.getKeys(column, 1024);
+            byte[][] arrays = lucene0.getKeys(column, 1024, false);
 
             assertEquals(2, arrays.length);
             assertEquals("/test/removeMe.txt", new String(arrays[0]));
