@@ -67,7 +67,7 @@ public class TestCassandraClient extends OpentrackerTestBase {
 
             cc.setColumns(insertKey, columns);
             
-            byte[][] keys = cc.getKeys(columnNames, 131072);
+            byte[][] keys = cc.getKeys(columnNames, 131072, false);
             
             for (byte[] key : keys) {
                 System.out.println(new String(key));
@@ -76,6 +76,41 @@ public class TestCassandraClient extends OpentrackerTestBase {
             assertTrue(keys.length > 0);
             
         } catch (IOException e) {
+            e.printStackTrace();
+            fail("exception is not expected.");
+        }
+    }
+
+    @Test
+    public void testGetAllKeys() {
+        List<byte[]> columnNames = new ArrayList<byte[]>();
+        columnNames.add("DESCRIPTOR".getBytes());
+
+        try {
+
+            cc.truncate(columnFamily);
+
+            ByteBuffer insertKey = ByteBufferUtil.bytes("sampleFile");
+            Map<byte[], byte[]> columns = new LinkedHashMap<byte[], byte[]>();
+            columns.put("DESCRIPTOR".getBytes(), "{\"lastModified\":1397557341307,\"name\":\"/DESCRIPTOR\",\"length\":0,\"blocks\":[],\"deleted\":false,\"lastAccessed\":1397557341307}".getBytes());
+
+            cc.setColumns(insertKey, columns);
+
+            insertKey = ByteBufferUtil.bytes("sampleFile1");
+            columns.put("DESCRIPTOR".getBytes(), "{\"lastModified\":1397557341307,\"name\":\"/DESCRIPTOR\",\"length\":0,\"blocks\":[],\"deleted\":true,\"lastAccessed\":1397557341307}".getBytes());
+            cc.setColumns(insertKey, columns);
+
+            byte[][] keys = cc.getKeys(columnNames, 131072, true);
+            ArrayList<String> actuals = new ArrayList<String>();
+
+            for (byte[] key : keys) {
+                actuals.add(new String(key));
+            }
+            assertTrue(actuals.contains("sampleFile"));
+            assertTrue(actuals.contains("sampleFile1"));
+            assertEquals(2, keys.length);
+
+        } catch (Exception e) {
             e.printStackTrace();
             fail("exception is not expected.");
         }
