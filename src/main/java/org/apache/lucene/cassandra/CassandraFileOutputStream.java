@@ -171,9 +171,11 @@ public class CassandraFileOutputStream extends OutputStream {
         int bytesWritten = 0;
         try {
             //writeBytes(b, off, len, append);
+            /*
             if (! append) {
                 file.delete();
             }
+            */
             file.write(b, off, len);
             bytesWritten = len;
         } finally {
