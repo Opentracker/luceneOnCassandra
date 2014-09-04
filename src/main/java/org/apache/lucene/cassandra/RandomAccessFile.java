@@ -177,5 +177,8 @@ public interface RandomAccessFile {
      *         <code>false</code> otherwise.
      */
     public boolean getFDvalid() throws IOException;
+    
+    
+    public File getFile();
 
 }
