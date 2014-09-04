@@ -102,14 +102,15 @@ public class CassandraClient {
     }
 
     /**
-     * Return the keys that define the given column names.
+     * Return the keys that define the given column names only if the file is not
+     * deleted.
      * 
      * @param columnNames
      *            the names of the columns
      * @return the rows that contain those columns
      * @throws IOException
      */
-    public byte[][] getKeys(List<byte[]> columnNames, int count) throws IOException {
+    public byte[][] getKeys(List<byte[]> columnNames, int count, boolean getAll) throws IOException {
 
         try {
             List<ByteBuffer> converter = new ArrayList<ByteBuffer>();
@@ -136,8 +137,7 @@ public class CassandraClient {
                     FileDescriptor fileDescriptor =
                             FileDescriptorUtils
                                     .fromBytes(column.getValue(), this.blockSize);
-                    if (fileDescriptor == null
-                            || fileDescriptor.isDeleted()) {
+                    if ((fileDescriptor == null || fileDescriptor.isDeleted()) && !getAll) {
                         continue;
                     }
                     keys.add(ByteBufferUtil.getArray(keySlice.key));
