@@ -52,7 +52,7 @@ public class ColumnOrientedDirectory {
      * @throws IOException
      */
     public String[] getFileNames() throws IOException {
-        byte[][] keys = cassandraClient.getKeys(systemColumns, 131072);
+        byte[][] keys = cassandraClient.getKeys(systemColumns, 131072, false);
         List<String> fileNames = new ArrayList<String>();
         for (byte[] key : keys) {
             fileNames.add(new String(key));
