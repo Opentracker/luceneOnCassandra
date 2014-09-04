@@ -143,4 +143,9 @@ public class HadoopRandomAccessFile implements RandomAccessFile, Serializable {
         // return thePrivateFile.getFDvalid();
         return isOpen;
     }
+    
+    public File getFile() {
+        logger.info("getFile()");
+        return null;
+    }
 }

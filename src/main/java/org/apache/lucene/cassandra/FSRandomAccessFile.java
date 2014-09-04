@@ -124,9 +124,9 @@ public class FSRandomAccessFile implements RandomAccessFile, Serializable {
         return read;
     }
 
-    public Closeable getFile() {
+    public File getFile() {
         logger.info("getFile()");
-        return (Closeable) thePrivateFile;
+        return null;
     }
 
     public void getFDsync() throws SyncFailedException, IOException {
