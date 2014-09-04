@@ -130,8 +130,7 @@ public class ACassandraRandomAccessFile implements RandomAccessFile,
         }
     }
 
-    // don't actually need this method.
-    public Closeable getFile() {
+    public File getFile() {
         logger.trace("called getFile");
         return file;
     }
