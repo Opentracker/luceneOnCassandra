@@ -84,16 +84,8 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
     public File get(File directory, String name) {
         getDNCount++;
         long ms = System.currentTimeMillis();
-        
-        if (name.equals("index") || name.equals("/index")) {
-            logger.info("1index file creation");
-            for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
-                logger.info(ste.toString());
-            }
-        }
 
         try {
-            logger.info("file get directory canonical path {} name {}", directory.getCanonicalPath(), name);
             ACassandraFile acf =
                     new ACassandraFile(directory.getCanonicalPath(), name,
                             IOContext.DEFAULT, true, "lucene0", "index0", 16384);
@@ -108,7 +100,6 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
 
     @Override
     public File get(String canonicalPath) {
-        logger.info("file get canonicalPath {}", canonicalPath);
         return new ACassandraFile(canonicalPath);
     }
 
@@ -151,22 +142,10 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         this.keyspace = "lucene0";
         this.columnFamily = "index0";
         this.cassandraDirectory = directory;
-        logger.info("cassandraDirectory {} name {}", cassandraDirectory, name);
+        //logger.info("cassandraDirectory {} name {}", cassandraDirectory, name);
         this.fs = new CassandraFileSystem(provider, cassandraDirectory);
         boolean readOnly = true;
         monitor = JmxMonitor.getInstance().getCassandraMonitor(this);
-        if (this.name.equals("/segments_1") || this.name.equals("/segments.gen") || this.name.equals("/index")) {
-            logger.info("stacktrace 10");
-            for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
-                logger.info(ste.toString());
-            }
-        }
-        if (name.equals("index") || name.equals("/index")) {
-            logger.info("2index file creation");
-            for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
-                logger.info(ste.toString());
-            }
-        }
         try {
             cassandraClient =
                     new CassandraClient("localhost", 9160, true, keyspace,
@@ -185,13 +164,6 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
                         this.columnOrientedDirectory.getFileDescriptor(
                                 this.name, true);
                 readOnly = false;
-                if (name.equals("segments.gen")) {
-                    logger.info("stacktrace 1");
-                    for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
-                        logger.info(ste.toString());
-                    }
-                    logger.info("stacktrace end");
-                }
             } else if (mode.context == IOContext.Context.READ) {
                 this.fd =
                         this.columnOrientedDirectory
@@ -247,20 +219,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         this.keyspace = keyspace;
         this.columnFamily = columnFamily;
         this.cassandraDirectory = directory;
-        logger.info("cassandraDirectory {} name {}", cassandraDirectory, name);
-        logger.info("name {}", this.name);
-        if (this.name.equals("/segments_1") || this.name.equals("/segments.gen") || this.name.equals("/index")) {
-            logger.info("stacktrace 2");
-            for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
-                logger.info(ste.toString());
-            }
-        }
-        if (name.equals("index") || name.equals("/index")) {
-            logger.info("3index file creation");
-            for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
-                logger.info(ste.toString());
-            }
-        }
+        //logger.info("cassandraDirectory {} name {}", cassandraDirectory, name);
         this.fs = new CassandraFileSystem(provider, cassandraDirectory);
         boolean readOnly = true;
         monitor = JmxMonitor.getInstance().getCassandraMonitor(this);
@@ -282,13 +241,6 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
                         this.columnOrientedDirectory.getFileDescriptor(
                                 this.name, true);
                 readOnly = false;
-                if (name.equals("segments.gen")) {
-                    logger.info("stacktrace 3");
-                    for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
-                        logger.info(ste.toString());
-                    }
-                    logger.info("stacktrace end");
-                }
             } else if (mode.context == IOContext.Context.READ) {
                 this.fd =
                         this.columnOrientedDirectory
@@ -380,7 +332,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
             }
             files = columnOrientedDirectory.getFileNames();
             logger.info("files length " + files.length);
-        } catch (Exception e) {
+        } catch (IOException e) {
             logger.error("unable to list ", e);
         }
         listTime += System.currentTimeMillis() - ms;
@@ -397,7 +349,7 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         String[] files = {};
         try {
             files = columnOrientedDirectory.getFileNames();
-        } catch (Exception e) {
+        } catch (IOException e) {
             logger.error("unable to list ", e);
         }
         emptyListTime += System.currentTimeMillis() - ms;
@@ -1211,10 +1163,6 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
     
     public FileDescriptor getFileDescriptor() {
         return this.fd;
-    }
-    
-    public void setFileDescriptor(FileDescriptor fileDescriptor) {
-        this.fd = fileDescriptor;
     }
     
     /**
