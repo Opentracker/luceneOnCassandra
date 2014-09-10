@@ -177,7 +177,10 @@ public class ACassandraRandomAccessFile implements RandomAccessFile,
             ColumnOrientedFile cof =
                     new ColumnOrientedFile(file.getCassandraClient());
             FileDescriptor cassandraFD =
-                    cof.getFileDescriptor(file.getName(), file.getBlockSize());
+                    cof.getFileDescriptor(file.getAbsolutePath(), file.getBlockSize());
+
+            logger.info("cassandra file "  + cassandraFD.getName());
+            logger.info("existing file "  + fd.getName());
 
             if (cassandraFD != null) {
 
@@ -191,7 +194,7 @@ public class ACassandraRandomAccessFile implements RandomAccessFile,
                 }
             }
 
-            cof.setFileDescriptor(file.getName(), fd);
+            cof.setFileDescriptor(file.getAbsolutePath(), fd);
             syncTime += System.currentTimeMillis() - ms;
 
         }
@@ -224,7 +227,7 @@ public class ACassandraRandomAccessFile implements RandomAccessFile,
                 } else if (file.getMode().context == IOContext.Context.DEFAULT) {
                     rw = true;
                 }
-                channel = FileChannelImpl.open(file.getFD(), file.getName(), true, rw, this);
+                channel = FileChannelImpl.open(file.getFD(), file.getAbsolutePath(), true, rw, this);
             }
             return channel;
         }
