@@ -4,8 +4,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.FileChannel;
+import java.util.Map;
 
 import org.apache.lucene.cassandra.nio.FileChannelImpl;
+import org.apache.lucene.store.IOContext;
 
 import sun.misc.IoTrace;
 
@@ -43,7 +45,7 @@ public class CassandraFileOutputStream extends OutputStream {
     private final Object closeLock = new Object();
     private volatile boolean closed = false;
     
-    private final File file;
+    private File file;
     
     
     /**
@@ -123,8 +125,15 @@ public class CassandraFileOutputStream extends OutputStream {
             System.out.println("existing fd " + this.append);
             this.fd = file.getFileDescriptor();
         } else {
+            // delete the file
+            if (file.exists()) {
+                System.out.println("deleting file " + file.getPath());
+                file.delete();
+            }
+            // construct a new file.
+            this.file = new ACassandraFile(file.getParent(true), file.getName(), IOContext.DEFAULT, true, (String)file.getStorage().get("keyspace"), (String)file.getStorage().get("columnFamily"), 16384);
             System.out.println("new fd " + this.append);
-            this.fd = new FileDescriptor(name, 16384);
+            this.fd = this.file.getFileDescriptor();
         }
         this.path = name;
         //fd.incrementAndGetUseCount();
