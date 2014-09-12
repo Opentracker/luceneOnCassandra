@@ -63,7 +63,7 @@ public class SimpleFSDirectory extends FSDirectory {
   @Override
   public IndexInput openInput(String name, IOContext context) throws IOException {
     ensureOpen();
-    logger.info("openInput name {}", name);
+    logger.info("openInput name {} directory abs {}", name, directory.getAbsolutePath());
     final File path = directory.get(directory, name);
     RandomAccessFile raf = directory.getRandomAccessFile(path, "r");
     return new SimpleFSIndexInput("SimpleFSIndexInput(path=\"" + path.getPath() + "\")", raf, context);
