@@ -25,6 +25,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -452,5 +453,9 @@ public class HadoopFile implements File, Serializable {
         return -1;
     }
     
+    @Override
+    public Map<String, Object> getStorage() {
+        return null;
+    }
 
 }
