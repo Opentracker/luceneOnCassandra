@@ -21,6 +21,7 @@ import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
 
 /**
  * An representation of file and directory pathnames.
@@ -472,4 +473,14 @@ public interface File {
 
     public boolean equals(Object f);
 
+    /**
+     * Different backend storage has different storage setting. For example, cassandra
+     * has keyspace and column family whilst native filesystem has none. So the
+     * return map can be null for file system or key keyspace and columnFamily
+     * for cassandra so construction of object know where to retrieve the
+     * configuration correctly.
+     *
+     * @return
+     */
+    public Map<String, Object> getStorage();
 }
