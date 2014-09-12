@@ -126,8 +126,22 @@ public class TestCassandraFileOutputStream extends OpentrackerTestBase {
             File stateFile = new ACassandraFile("/", "test/removeMe1.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
             CassandraFileOutputStream fos = new CassandraFileOutputStream(stateFile);
             BytesReference bytes = builder.bytes();
-            fos.write(bytes.array(), 0, 10);
-            bytes.writeTo(fos);
+            System.out.println(Util.bytesToHex(bytes.array()));
+            fos.write(bytes.array(), 0, bytes.length());
+            fos.getChannel().force(true);
+            fos.close();
+            // write again
+            builder = XContentFactory.contentBuilder(XContentType.JSON, new BytesStreamOutput());
+            builder.prettyPrint();
+            builder.startObject();
+            builder.field("version", 456);
+            builder.endObject();
+            builder.flush();
+            stateFile = new ACassandraFile("/", "test/removeMe1.txt", IOContext.DEFAULT, true, keyspace, columnFamily, blockSize);
+            fos = new CassandraFileOutputStream(stateFile);
+            bytes = builder.bytes();
+            //System.out.println(Util.bytesToHex(bytes.array()));
+            fos.write(bytes.array(), 0, bytes.length());
             fos.getChannel().force(true);
             fos.close();
 
@@ -136,6 +150,7 @@ public class TestCassandraFileOutputStream extends OpentrackerTestBase {
             byte[] filename = "/test/removeMe1.txt".getBytes();
             Map<byte[], byte[]> blocks = client.getColumns(filename);
             for (Entry<byte[], byte[]> block : blocks.entrySet()) {
+                //System.out.println(new String(block.getKey()));
                 String column = new String(block.getKey());
                 if (column.equals("DESCRIPTOR")) {
                     continue;
@@ -143,7 +158,7 @@ public class TestCassandraFileOutputStream extends OpentrackerTestBase {
                 actual.append(Util.bytesToHex(block.getValue()));
             }
 
-            assertEquals(actual.toString(), "7B0A20202276657273696F6E22203A203133320A7D");
+            assertEquals(actual.toString(), "7B0A20202276657273696F6E22203A203435360A7D");
         } catch (Exception e) {
             e.printStackTrace();
             fail("fail is not expected");
