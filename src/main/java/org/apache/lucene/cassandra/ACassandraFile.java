@@ -14,6 +14,7 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +80,8 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
     
     private CassandraFileSystemProvider provider = new CassandraFileSystemProvider();
     
+    private static Map<String, Object> storage = null;
+
     @Override
 
     public File get(File directory, String name) {
@@ -146,6 +149,9 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         this.fs = new CassandraFileSystem(provider, cassandraDirectory);
         boolean readOnly = true;
         monitor = JmxMonitor.getInstance().getCassandraMonitor(this);
+        storage = new HashMap<>();
+        storage.put("keyspace", this.keyspace);
+        storage.put("columnFamily", this.columnFamily);
         try {
             cassandraClient =
                     new CassandraClient("localhost", 9160, true, keyspace,
@@ -223,6 +229,9 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
         this.fs = new CassandraFileSystem(provider, cassandraDirectory);
         boolean readOnly = true;
         monitor = JmxMonitor.getInstance().getCassandraMonitor(this);
+        storage = new HashMap<>();
+        storage.put("keyspace", this.keyspace);
+        storage.put("columnFamily", this.columnFamily);
         try {
             cassandraClient =
                     new CassandraClient("localhost", 9160, frameMode, keyspace,
@@ -1605,6 +1614,11 @@ public class ACassandraFile implements File, Closeable, MonitorType, Path {
     @Override
     public boolean equals(Object f) {
         return f instanceof File && ((File)f).getAbsolutePath().equals(name);
+    }
+
+    @Override
+    public Map<String, Object> getStorage() {
+        return storage;
     }
 
 }
